@@ -6,6 +6,13 @@
 <title>Curtain Academy — ระบบเรียนรู้ผ้าม่าน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -20,260 +27,153 @@
   --transition:all .3s cubic-bezier(.4,0,.2,1);
 }
 html{scroll-behavior:smooth}
-body{
-  font-family:'Noto Sans Thai',sans-serif;
-  background:var(--cream);color:var(--text);
-  min-height:100vh;line-height:1.6;
-  overflow-x:hidden;
-}
+body{font-family:'Noto Sans Thai',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;line-height:1.6;overflow-x:hidden}
 #root{min-height:100vh;display:flex;flex-direction:column}
-
-/* ─── Scrollbar ─── */
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--navy-mid);border-radius:99px}
-
-/* ─── Animations ─── */
 @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes curtainDrop{from{transform:scaleY(0);transform-origin:top}to{transform:scaleY(1);transform-origin:top}}
 @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(400px) rotate(720deg);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
 .fade-in{animation:fadeIn .5s ease forwards}
 .slide-in{animation:slideIn .4s ease forwards}
-
-/* ─── Typography ─── */
 .font-display{font-family:'Playfair Display',serif}
 h1,h2,h3{font-weight:700}
 
-/* ─── Buttons ─── */
-.btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 22px;border-radius:var(--radius-sm);
-  font-weight:600;font-size:.9rem;cursor:pointer;
-  border:none;transition:var(--transition);
-  font-family:inherit;text-decoration:none;
-}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:var(--radius-sm);font-weight:600;font-size:.9rem;cursor:pointer;border:none;transition:var(--transition);font-family:inherit;text-decoration:none}
 .btn:active{transform:scale(.96)}
 .btn-primary{background:var(--navy);color:var(--gold);box-shadow:0 2px 12px rgba(15,27,45,.3)}
-.btn-primary:hover{background:var(--navy-light);box-shadow:0 4px 20px rgba(15,27,45,.4)}
+.btn-primary:hover{background:var(--navy-light)}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);box-shadow:0 2px 12px rgba(200,164,78,.3)}
 .btn-gold:hover{box-shadow:0 4px 20px rgba(200,164,78,.5);transform:translateY(-1px)}
 .btn-outline{background:transparent;border:2px solid var(--navy);color:var(--navy)}
 .btn-outline:hover{background:var(--navy);color:var(--white)}
 .btn-danger{background:var(--danger);color:var(--white)}
 .btn-danger:hover{opacity:.85}
+.btn-success{background:var(--success);color:var(--white)}
 .btn-sm{padding:6px 14px;font-size:.82rem}
 .btn-lg{padding:14px 32px;font-size:1rem;border-radius:var(--radius)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* ─── Form ─── */
-.input{
-  width:100%;padding:10px 14px;border:2px solid var(--cream-dark);
-  border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;
-  background:var(--white);transition:var(--transition);
-}
+.input{width:100%;padding:10px 14px;border:2px solid var(--cream-dark);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;background:var(--white);transition:var(--transition)}
 .input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,78,.2)}
 .label{display:block;font-weight:600;font-size:.85rem;margin-bottom:4px;color:var(--navy)}
 select.input{cursor:pointer}
 textarea.input{resize:vertical;min-height:80px}
 
-/* ─── Card ─── */
-.card{
-  background:var(--white);border-radius:var(--radius-lg);
-  box-shadow:var(--shadow);overflow:hidden;transition:var(--transition);
-}
+.card{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;transition:var(--transition)}
 .card:hover{box-shadow:var(--shadow-lg)}
-
-/* ─── Badge ─── */
-.badge{
-  display:inline-flex;align-items:center;padding:3px 10px;
-  border-radius:99px;font-size:.75rem;font-weight:600;
-}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:600}
 .badge-gold{background:rgba(200,164,78,.15);color:var(--gold-dim)}
 .badge-success{background:rgba(45,138,78,.12);color:var(--success)}
 .badge-danger{background:rgba(192,57,43,.12);color:var(--danger)}
 .badge-info{background:rgba(41,128,185,.12);color:var(--info)}
 
-/* ─── Nav ─── */
-.nav{
-  background:var(--navy);position:sticky;top:0;z-index:100;
-  box-shadow:0 2px 20px rgba(15,27,45,.3);
-}
-.nav-inner{
-  max-width:1280px;margin:0 auto;padding:0 24px;
-  display:flex;align-items:center;justify-content:space-between;
-  height:64px;
-}
-.nav-brand{
-  font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;
-  color:var(--gold);display:flex;align-items:center;gap:10px;
-}
-.nav-brand svg{width:28px;height:28px}
+.nav{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(15,27,45,.3)}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-brand{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:10px;cursor:pointer}
 .nav-links{display:flex;gap:4px;align-items:center}
-.nav-link{
-  padding:8px 14px;color:rgba(255,255,255,.7);font-size:.85rem;
-  font-weight:500;border-radius:var(--radius-sm);cursor:pointer;
-  transition:var(--transition);border:none;background:none;font-family:inherit;
-}
+.nav-link{padding:8px 14px;color:rgba(255,255,255,.7);font-size:.85rem;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border:none;background:none;font-family:inherit}
 .nav-link:hover,.nav-link.active{color:var(--gold);background:rgba(200,164,78,.1)}
-.nav-user{
-  display:flex;align-items:center;gap:10px;color:var(--white);font-size:.85rem;
-}
-.nav-avatar{
-  width:34px;height:34px;border-radius:50%;background:var(--gold);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--navy);font-weight:700;font-size:.85rem;
-}
+.nav-user{display:flex;align-items:center;gap:10px;color:var(--white);font-size:.85rem}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:var(--navy);font-weight:700;font-size:.85rem}
 .nav-mobile-toggle{display:none;background:none;border:none;color:var(--gold);cursor:pointer;font-size:1.4rem}
 
-/* ─── Layout ─── */
 .container{max-width:1200px;margin:0 auto;padding:24px}
-.page-header{margin-bottom:32px}
 .page-title{font-size:1.8rem;color:var(--navy);margin-bottom:4px;font-family:'Playfair Display',serif}
 .page-sub{color:var(--text-light);font-size:.95rem}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 
-/* ─── Login ─── */
-.login-wrap{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--navy);position:relative;overflow:hidden;
-}
-.login-bg{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse at 20% 50%,rgba(200,164,78,.08) 0%,transparent 50%),
-    radial-gradient(ellipse at 80% 20%,rgba(36,59,92,.5) 0%,transparent 50%),
-    radial-gradient(ellipse at 50% 80%,rgba(200,164,78,.05) 0%,transparent 50%);
-}
-.login-curtain{
-  position:absolute;top:0;width:100%;height:100%;
-  background:repeating-linear-gradient(90deg,
-    rgba(200,164,78,.03) 0px,rgba(200,164,78,.03) 2px,
-    transparent 2px,transparent 40px);
-  animation:curtainDrop 1.5s ease forwards;
-}
-.login-card{
-  position:relative;z-index:2;width:420px;max-width:92vw;
-  background:rgba(255,255,255,.04);backdrop-filter:blur(20px);
-  border:1px solid rgba(200,164,78,.2);border-radius:var(--radius-lg);
-  padding:48px 36px;animation:fadeIn .8s ease;
-}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);position:relative;overflow:hidden}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(200,164,78,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(36,59,92,.5) 0%,transparent 50%)}
+.login-curtain{position:absolute;top:0;width:100%;height:100%;background:repeating-linear-gradient(90deg,rgba(200,164,78,.03) 0px,rgba(200,164,78,.03) 2px,transparent 2px,transparent 40px);animation:curtainDrop 1.5s ease forwards}
+.login-card{position:relative;z-index:2;width:420px;max-width:92vw;background:rgba(255,255,255,.04);backdrop-filter:blur(20px);border:1px solid rgba(200,164,78,.2);border-radius:var(--radius-lg);padding:48px 36px;animation:fadeIn .8s ease}
 .login-logo{text-align:center;margin-bottom:32px}
-.login-logo h1{
-  font-family:'Playfair Display',serif;color:var(--gold);
-  font-size:2rem;margin-bottom:4px;
-}
+.login-logo h1{font-family:'Playfair Display',serif;color:var(--gold);font-size:2rem;margin-bottom:4px}
 .login-logo p{color:rgba(255,255,255,.5);font-size:.85rem}
 .login-card .label{color:rgba(255,255,255,.7)}
-.login-card .input{
-  background:rgba(255,255,255,.06);border-color:rgba(200,164,78,.2);
-  color:var(--white);
-}
+.login-card .input{background:rgba(255,255,255,.06);border-color:rgba(200,164,78,.2);color:var(--white)}
 .login-card .input:focus{border-color:var(--gold)}
 .login-card .input::placeholder{color:rgba(255,255,255,.3)}
-.login-hint{
-  margin-top:24px;padding:16px;border-radius:var(--radius-sm);
-  background:rgba(200,164,78,.08);border:1px solid rgba(200,164,78,.15);
-}
+.login-hint{margin-top:24px;padding:16px;border-radius:var(--radius-sm);background:rgba(200,164,78,.08);border:1px solid rgba(200,164,78,.15)}
 .login-hint p{color:rgba(255,255,255,.6);font-size:.78rem;margin-bottom:4px}
 .login-hint code{color:var(--gold);font-size:.78rem}
 
-/* ─── Dashboard cards ─── */
-.stat-card{
-  padding:24px;border-radius:var(--radius);
-  background:var(--white);box-shadow:var(--shadow);
-  display:flex;align-items:center;gap:16px;
-}
-.stat-icon{
-  width:50px;height:50px;border-radius:var(--radius-sm);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;
-}
+.stat-card{padding:24px;border-radius:var(--radius);background:var(--white);box-shadow:var(--shadow);display:flex;align-items:center;gap:16px}
+.stat-icon{width:50px;height:50px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.4rem}
 .stat-value{font-size:1.6rem;font-weight:800;color:var(--navy);line-height:1}
 .stat-label{font-size:.82rem;color:var(--text-light);margin-top:2px}
 
-/* ─── Lesson Card ─── */
-.lesson-card{
-  position:relative;border-radius:var(--radius-lg);overflow:hidden;
-  background:var(--white);box-shadow:var(--shadow);
-  transition:var(--transition);cursor:pointer;
-}
+.lesson-card{position:relative;border-radius:var(--radius-lg);overflow:hidden;background:var(--white);box-shadow:var(--shadow);transition:var(--transition);cursor:pointer}
 .lesson-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
 .lesson-card.locked{opacity:.65;cursor:not-allowed}
 .lesson-card.locked:hover{transform:none}
-.lesson-cover{
-  height:140px;display:flex;align-items:center;justify-content:center;
-  font-size:3rem;position:relative;overflow:hidden;
-}
-.lesson-cover::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(transparent 40%,rgba(0,0,0,.4));
-}
+.lesson-cover{height:140px;display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden}
+.lesson-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.4))}
 .lesson-body{padding:20px}
-.lesson-num{
-  font-size:.7rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:2px;color:var(--gold-dim);margin-bottom:4px;
-}
+.lesson-num{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold-dim);margin-bottom:4px}
 .lesson-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:6px}
 .lesson-desc{font-size:.82rem;color:var(--text-light);margin-bottom:12px;line-height:1.5}
 .lesson-footer{display:flex;align-items:center;justify-content:space-between}
-.lock-overlay{
-  position:absolute;inset:0;background:rgba(15,27,45,.3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:2.5rem;z-index:2;backdrop-filter:blur(2px);
-}
+.lock-overlay{position:absolute;inset:0;background:rgba(15,27,45,.3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;z-index:2;backdrop-filter:blur(2px)}
 
-/* ─── Lesson Content ─── */
 .lesson-content{max-width:800px;margin:0 auto}
 .lesson-content h2{font-size:1.4rem;color:var(--navy);margin:24px 0 12px;font-family:'Playfair Display',serif}
 .lesson-content h3{font-size:1.1rem;color:var(--navy-mid);margin:18px 0 8px}
 .lesson-content p{margin-bottom:12px;line-height:1.8;color:var(--text)}
 .lesson-content ul{margin:8px 0 16px 20px}
 .lesson-content li{margin-bottom:6px;line-height:1.6}
-.lesson-content .highlight-box{
-  padding:18px 20px;border-radius:var(--radius-sm);margin:16px 0;
-  background:linear-gradient(135deg,rgba(200,164,78,.08),rgba(200,164,78,.03));
-  border-left:4px solid var(--gold);
-}
-.lesson-content .info-box{
-  padding:18px 20px;border-radius:var(--radius-sm);margin:16px 0;
-  background:rgba(41,128,185,.06);border-left:4px solid var(--info);
-}
-.lesson-nav{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-top:32px;padding-top:24px;border-top:2px solid var(--cream-dark);
-}
+.lesson-content .highlight-box{padding:18px 20px;border-radius:var(--radius-sm);margin:16px 0;background:linear-gradient(135deg,rgba(200,164,78,.08),rgba(200,164,78,.03));border-left:4px solid var(--gold)}
+.lesson-content .info-box{padding:18px 20px;border-radius:var(--radius-sm);margin:16px 0;background:rgba(41,128,185,.06);border-left:4px solid var(--info)}
+.lesson-content img{max-width:100%;border-radius:var(--radius-sm);margin:12px 0;box-shadow:var(--shadow)}
+.lesson-nav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:2px solid var(--cream-dark)}
 
-/* ─── Quiz ─── */
+/* ── Rich Editor ── */
+.editor-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:var(--cream);border-bottom:2px solid var(--cream-dark);border-radius:var(--radius-sm) var(--radius-sm) 0 0;position:sticky;top:64px;z-index:10}
+.editor-toolbar button{padding:6px 10px;border:1px solid var(--cream-dark);border-radius:4px;background:var(--white);cursor:pointer;font-size:.82rem;transition:var(--transition);font-family:inherit;color:var(--text);min-width:32px}
+.editor-toolbar button:hover{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.editor-toolbar button.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+.editor-toolbar .sep{width:1px;background:var(--cream-dark);margin:0 4px;align-self:stretch}
+.editor-area{min-height:400px;padding:24px;outline:none;border:2px solid var(--cream-dark);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);background:var(--white);font-size:.95rem;line-height:1.8;overflow-y:auto}
+.editor-area:focus{border-color:var(--gold)}
+.editor-area h2{font-size:1.4rem;color:var(--navy);margin:20px 0 10px;font-family:'Playfair Display',serif}
+.editor-area h3{font-size:1.1rem;color:var(--navy-mid);margin:16px 0 8px}
+.editor-area img{max-width:100%;border-radius:var(--radius-sm);margin:10px 0;cursor:pointer}
+.editor-area p{margin-bottom:10px}
+.editor-area ul,.editor-area ol{margin:8px 0 14px 20px}
+.editor-area blockquote{border-left:4px solid var(--gold);padding:12px 16px;background:rgba(200,164,78,.06);margin:12px 0;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.editor-area table{border-collapse:collapse;width:100%;margin:12px 0}
+.editor-area td,.editor-area th{border:1px solid var(--cream-dark);padding:8px 12px;text-align:left}
+.editor-area th{background:var(--cream);font-weight:600}
+
+.img-upload-zone{border:2px dashed var(--cream-dark);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:var(--transition);margin:12px 0;background:rgba(200,164,78,.02)}
+.img-upload-zone:hover{border-color:var(--gold);background:rgba(200,164,78,.06)}
+.img-upload-zone.dragging{border-color:var(--gold);background:rgba(200,164,78,.1)}
+.img-preview-grid{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.img-preview-item{position:relative;width:120px;height:90px;border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow)}
+.img-preview-item img{width:100%;height:100%;object-fit:cover}
+.img-preview-item .img-remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--danger);color:var(--white);border:none;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center}
+.img-insert-btn{position:absolute;bottom:4px;left:4px;padding:2px 8px;border-radius:4px;background:var(--navy);color:var(--gold);border:none;cursor:pointer;font-size:.7rem}
+
+.upload-progress{height:4px;background:var(--cream-dark);border-radius:99px;overflow:hidden;margin-top:8px}
+.upload-progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width .3s;border-radius:99px}
+
+.spinner{width:20px;height:20px;border:3px solid var(--cream-dark);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+
+/* Quiz */
 .quiz-container{max-width:700px;margin:0 auto}
-.quiz-header{text-align:center;margin-bottom:32px}
-.quiz-progress{
-  display:flex;gap:6px;justify-content:center;margin-top:16px;
-}
-.quiz-dot{
-  width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.7rem;font-weight:700;transition:var(--transition);
-}
+.quiz-progress{display:flex;gap:6px;justify-content:center;margin-top:16px}
+.quiz-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;transition:var(--transition)}
 .quiz-dot.current{background:var(--gold);color:var(--navy);transform:scale(1.15)}
 .quiz-dot.correct{background:var(--success);color:var(--white)}
 .quiz-dot.wrong{background:var(--danger);color:var(--white)}
 .quiz-dot.pending{background:var(--cream-dark);color:var(--text-light)}
-.quiz-question{
-  font-size:1.1rem;font-weight:600;color:var(--navy);
-  margin-bottom:20px;line-height:1.6;
-}
-.quiz-option{
-  display:block;width:100%;text-align:left;padding:14px 18px;
-  margin-bottom:10px;border:2px solid var(--cream-dark);
-  border-radius:var(--radius-sm);background:var(--white);
-  font-size:.92rem;cursor:pointer;transition:var(--transition);
-  font-family:inherit;color:var(--text);
-}
+.quiz-question{font-size:1.1rem;font-weight:600;color:var(--navy);margin-bottom:20px;line-height:1.6}
+.quiz-option{display:block;width:100%;text-align:left;padding:14px 18px;margin-bottom:10px;border:2px solid var(--cream-dark);border-radius:var(--radius-sm);background:var(--white);font-size:.92rem;cursor:pointer;transition:var(--transition);font-family:inherit;color:var(--text)}
 .quiz-option:hover{border-color:var(--gold);background:rgba(200,164,78,.04)}
 .quiz-option.selected{border-color:var(--navy);background:rgba(15,27,45,.04)}
 .quiz-option.correct-answer{border-color:var(--success);background:rgba(45,138,78,.08);color:var(--success)}
@@ -283,135 +183,67 @@ textarea.input{resize:vertical;min-height:80px}
 .quiz-score.perfect{color:var(--gold);animation:pulse .6s ease}
 .quiz-score.fail{color:var(--danger)}
 
-/* ─── Calculator ─── */
 .calc-wrap{max-width:700px;margin:0 auto}
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.calc-result{
-  margin-top:24px;padding:24px;border-radius:var(--radius);
-  background:linear-gradient(135deg,var(--navy),var(--navy-light));
-  color:var(--white);
-}
-.calc-result-row{
-  display:flex;justify-content:space-between;padding:8px 0;
-  border-bottom:1px solid rgba(255,255,255,.1);
-}
+.calc-result{margin-top:24px;padding:24px;border-radius:var(--radius);background:linear-gradient(135deg,var(--navy),var(--navy-light));color:var(--white)}
+.calc-result-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1)}
 .calc-result-row:last-child{border:none;font-weight:700;font-size:1.1rem;color:var(--gold)}
 
-/* ─── Game ─── */
-.game-board{
-  display:grid;gap:12px;max-width:600px;margin:20px auto;
-}
-.game-card-cell{
-  aspect-ratio:1;border-radius:var(--radius-sm);cursor:pointer;
-  perspective:600px;
-}
-.game-card-inner{
-  position:relative;width:100%;height:100%;transition:transform .5s;
-  transform-style:preserve-3d;
-}
-.game-card-cell.flipped .game-card-inner{transform:rotateY(180deg)}
-.game-card-cell.matched .game-card-inner{transform:rotateY(180deg)}
-.game-card-front,.game-card-back{
-  position:absolute;inset:0;backface-visibility:hidden;
-  border-radius:var(--radius-sm);display:flex;align-items:center;
-  justify-content:center;font-size:1.4rem;font-weight:700;
-}
-.game-card-front{
-  background:linear-gradient(135deg,var(--navy),var(--navy-mid));
-  color:var(--gold);font-size:1.8rem;
-}
-.game-card-back{
-  background:var(--white);border:2px solid var(--cream-dark);
-  transform:rotateY(180deg);font-size:.75rem;
-  padding:8px;text-align:center;color:var(--navy);
-  flex-direction:column;gap:4px;
-}
-.game-card-cell.matched .game-card-back{
-  border-color:var(--success);background:rgba(45,138,78,.06);
-}
-.game-timer{
-  text-align:center;font-size:1.8rem;font-weight:800;
-  color:var(--navy);font-family:'Playfair Display',serif;
-}
+.game-board{display:grid;gap:12px;max-width:600px;margin:20px auto}
+.game-card-cell{aspect-ratio:1;border-radius:var(--radius-sm);cursor:pointer;perspective:600px}
+.game-card-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.game-card-cell.flipped .game-card-inner,.game-card-cell.matched .game-card-inner{transform:rotateY(180deg)}
+.game-card-front,.game-card-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-weight:700}
+.game-card-front{background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:var(--gold);font-size:1.8rem}
+.game-card-back{background:var(--white);border:2px solid var(--cream-dark);transform:rotateY(180deg);font-size:.75rem;padding:8px;text-align:center;color:var(--navy);flex-direction:column;gap:4px}
+.game-card-cell.matched .game-card-back{border-color:var(--success);background:rgba(45,138,78,.06)}
+.game-timer{text-align:center;font-size:1.8rem;font-weight:800;color:var(--navy);font-family:'Playfair Display',serif}
 
-/* ─── Admin Tables ─── */
 .data-table{width:100%;border-collapse:separate;border-spacing:0}
-.data-table th{
-  text-align:left;padding:12px 16px;font-size:.78rem;
-  text-transform:uppercase;letter-spacing:1px;
-  color:var(--text-light);border-bottom:2px solid var(--cream-dark);
-  font-weight:600;
-}
-.data-table td{
-  padding:12px 16px;border-bottom:1px solid var(--cream-dark);
-  font-size:.88rem;vertical-align:middle;
-}
+.data-table th{text-align:left;padding:12px 16px;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);border-bottom:2px solid var(--cream-dark);font-weight:600}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--cream-dark);font-size:.88rem;vertical-align:middle}
 .data-table tr:hover td{background:rgba(200,164,78,.04)}
 
-/* ─── Modal ─── */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(15,27,45,.5);
-  backdrop-filter:blur(4px);z-index:200;
-  display:flex;align-items:center;justify-content:center;
-  animation:fadeIn .2s ease;
-}
-.modal-content{
-  background:var(--white);border-radius:var(--radius-lg);
-  width:500px;max-width:92vw;max-height:85vh;overflow-y:auto;
-  box-shadow:var(--shadow-lg);
-}
-.modal-header{
-  padding:20px 24px;border-bottom:1px solid var(--cream-dark);
-  display:flex;justify-content:space-between;align-items:center;
-}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,27,45,.5);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.modal-content{background:var(--white);border-radius:var(--radius-lg);width:500px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-content.wide{width:900px}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--cream-dark);display:flex;justify-content:space-between;align-items:center}
 .modal-header h3{font-size:1.1rem;color:var(--navy)}
-.modal-close{
-  background:none;border:none;font-size:1.3rem;cursor:pointer;
-  color:var(--text-light);transition:var(--transition);
-}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-light);transition:var(--transition)}
 .modal-close:hover{color:var(--danger)}
 .modal-body{padding:24px}
 .modal-footer{padding:16px 24px;border-top:1px solid var(--cream-dark);display:flex;gap:8px;justify-content:flex-end}
 .form-group{margin-bottom:16px}
 
-/* ─── Toast ─── */
 .toast-container{position:fixed;top:80px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
-.toast{
-  padding:12px 20px;border-radius:var(--radius-sm);
-  color:var(--white);font-size:.88rem;font-weight:500;
-  animation:slideIn .3s ease;box-shadow:var(--shadow);
-  display:flex;align-items:center;gap:8px;
-}
+.toast{padding:12px 20px;border-radius:var(--radius-sm);color:var(--white);font-size:.88rem;font-weight:500;animation:slideIn .3s ease;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px}
 .toast-success{background:var(--success)}
 .toast-error{background:var(--danger)}
 .toast-info{background:var(--info)}
+.confetti-piece{position:fixed;width:10px;height:10px;z-index:999;animation:confetti 2s ease forwards;pointer-events:none}
 
-/* ─── Confetti ─── */
-.confetti-piece{
-  position:fixed;width:10px;height:10px;z-index:999;
-  animation:confetti 2s ease forwards;pointer-events:none;
-}
+/* Firebase config banner */
+.config-banner{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:2px solid #f0c040;border-radius:var(--radius);padding:20px 24px;margin-bottom:24px}
+.config-banner h3{color:#856404;margin-bottom:8px}
+.config-banner p{font-size:.88rem;color:#856404;margin-bottom:4px}
+.config-banner code{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:4px;font-size:.82rem}
 
-/* ─── Responsive ─── */
+.tabs{display:flex;gap:2px;background:var(--cream-dark);padding:3px;border-radius:var(--radius-sm);margin-bottom:20px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:6px;cursor:pointer;font-weight:600;font-size:.88rem;border:none;background:transparent;font-family:inherit;color:var(--text-light);transition:var(--transition)}
+.tab.active{background:var(--white);color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
 @media(max-width:768px){
   .grid-2,.grid-3,.calc-grid{grid-template-columns:1fr}
-  .nav-links{
-    display:none;position:absolute;top:64px;left:0;right:0;
-    background:var(--navy);flex-direction:column;padding:12px;
-    border-bottom:2px solid var(--gold);
-  }
+  .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:var(--navy);flex-direction:column;padding:12px;border-bottom:2px solid var(--gold)}
   .nav-links.open{display:flex}
   .nav-mobile-toggle{display:block}
   .container{padding:16px}
   .page-title{font-size:1.4rem}
   .login-card{padding:32px 24px}
-  .stat-card{padding:16px}
-  .game-board{max-width:100%}
+  .editor-toolbar{position:static}
+  .modal-content.wide{width:95vw}
 }
-@media(max-width:480px){
-  .lesson-cover{height:100px}
-  .nav-user span{display:none}
-}
+@media(max-width:480px){.lesson-cover{height:100px}.nav-user span{display:none}}
 </style>
 </head>
 <body>
@@ -422,296 +254,134 @@ textarea.input{resize:vertical;min-height:80px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
+const {useState,useEffect,useCallback,useRef,createContext,useContext}=React;
 
-/* ════════════════════════════════════════════
-   DATA - Mock Firebase (replace with real Firebase)
-   ════════════════════════════════════════════ */
-const INITIAL_USERS = [
+/* ══════════════════════════════════════════
+   FIREBASE CONFIG — แก้ค่าตรงนี้ให้ตรงกับ Firebase project ของคุณ
+   ══════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "YOUR_APP_ID"
+};
+
+/* ── Firebase Init ── */
+let fb=null, db=null, auth=null, storage=null, useFirebase=false;
+try{
+  if(FIREBASE_CONFIG.apiKey!=="YOUR_API_KEY"){
+    fb=firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();
+    auth=firebase.auth();
+    storage=firebase.storage();
+    useFirebase=true;
+  }
+}catch(e){console.warn("Firebase init failed, using offline mode:",e)}
+
+/* ══════════════════════════════════════════
+   OFFLINE DATA (ใช้เมื่อยังไม่ได้ต่อ Firebase)
+   ══════════════════════════════════════════ */
+const LESSON_COLORS=["linear-gradient(135deg,#1a2d47,#2d4a6f)","linear-gradient(135deg,#2d4a3f,#3d6a5f)","linear-gradient(135deg,#4a2d47,#6a3d5f)","linear-gradient(135deg,#4a3d2d,#6a5a3d)","linear-gradient(135deg,#2d3d4a,#3d5a6a)"];
+
+const DEFAULT_USERS=[
   {id:"u1",name:"สมชาย (Admin)",email:"admin@curtain.com",role:"admin",password:"1234"},
   {id:"u2",name:"อาจารย์สมหญิง",email:"instructor@curtain.com",role:"instructor",password:"1234"},
   {id:"u3",name:"นักเรียน สมศักดิ์",email:"student@curtain.com",role:"student",password:"1234"},
 ];
 
-const LESSON_COLORS = [
-  "linear-gradient(135deg,#1a2d47,#2d4a6f)",
-  "linear-gradient(135deg,#2d4a3f,#3d6a5f)",
-  "linear-gradient(135deg,#4a2d47,#6a3d5f)",
-  "linear-gradient(135deg,#4a3d2d,#6a5a3d)",
-  "linear-gradient(135deg,#2d3d4a,#3d5a6a)",
-];
-const LESSON_ICONS = ["🪟","🔧","📏","🧮","💰"];
-
-const INITIAL_LESSONS = [
-  {
-    id:"L1",title:"ชนิดของผ้าม่าน",icon:"🪟",color:LESSON_COLORS[0],
-    description:"ทำความรู้จักผ้าม่านประเภทต่างๆ ตั้งแต่ม่านตาไก่ ม่านจีบ ไปจนถึงม่านพับ",
-    content:`<h2>บทที่ 1: ความรู้พื้นฐานเกี่ยวกับชนิดของผ้าม่าน</h2>
-<p>ผ้าม่านเป็นองค์ประกอบสำคัญของการตกแต่งภายใน ไม่เพียงแต่ช่วยกรองแสง แต่ยังช่วยเสริมความสวยงามให้กับห้อง การเลือกผ้าม่านที่เหมาะสมจำเป็นต้องเข้าใจชนิดของผ้าม่านแต่ละแบบ</p>
-
-<h3>1. ม่านตาไก่ (Eyelet/Grommet Curtains)</h3>
-<p>ม่านตาไก่เป็นม่านที่มีรูกลมเจาะที่ส่วนบนของผ้า สอดรางม่านผ่านรูเหล่านี้โดยตรง ให้ลุคที่ทันสมัยและสะอาดตา เหมาะกับห้องนั่งเล่นและห้องนอนสไตล์โมเดิร์น</p>
-<div class="highlight-box">💡 <strong>จุดเด่น:</strong> ติดตั้งง่าย เลื่อนเปิด-ปิดสะดวก จีบสม่ำเสมอ</div>
-
-<h3>2. ม่านจีบ (Pleated Curtains)</h3>
-<p>ม่านจีบเป็นสไตล์คลาสสิกที่ได้รับความนิยมมากที่สุด มีหลายแบบเช่น จีบ 2 นิ้ว จีบ 3 นิ้ว และจีบดินสอ แต่ละแบบให้ความรู้สึกที่แตกต่างกัน</p>
-<ul>
-<li><strong>จีบ 2 นิ้ว (Pinch Pleat):</strong> ให้ลุคหรูหรา เหมาะกับห้องรับแขก</li>
-<li><strong>จีบ 3 นิ้ว (Triple Pleat):</strong> จีบละเอียดกว่า ดูเป็นทางการมาก</li>
-<li><strong>จีบดินสอ (Pencil Pleat):</strong> จีบเล็กๆ เรียงตัวสม่ำเสมอ ใช้ได้ทุกสไตล์</li>
-</ul>
-
-<h3>3. ม่านพับ (Roman Blinds)</h3>
-<p>ม่านพับจะพับเก็บเป็นชั้นๆ เมื่อดึงขึ้น ให้ดูเรียบหรูและประหยัดพื้นที่ เหมาะกับหน้าต่างที่ไม่ใหญ่มาก</p>
-
-<h3>4. ม่านม้วน (Roller Blinds)</h3>
-<p>ม่านม้วนเป็นม่านที่ม้วนเก็บบนแกนกลม ใช้งานง่าย สะดวก เหมาะกับออฟฟิศหรือห้องที่ต้องการความเรียบง่าย</p>
-
-<h3>5. ม่านมู่ลี่ (Venetian Blinds)</h3>
-<p>ม่านมู่ลี่ประกอบด้วยแผ่นบาง (Slat) เรียงซ้อนกัน สามารถปรับมุมเพื่อควบคุมแสงได้ มีทั้งแบบไม้ อลูมิเนียม และพลาสติก</p>
-
-<div class="info-box">📌 <strong>เคล็ดลับ:</strong> การเลือกชนิดผ้าม่านควรพิจารณาจาก 3 ปัจจัย: สไตล์ห้อง, ฟังก์ชันการใช้งาน (กันแสง/กรองแสง), และงบประมาณ</div>`,
-    downloadUrl:"#",
+const DEFAULT_LESSONS=[
+  {id:"L1",title:"ชนิดของผ้าม่าน",icon:"🪟",color:LESSON_COLORS[0],description:"ทำความรู้จักผ้าม่านประเภทต่างๆ ตั้งแต่ม่านตาไก่ ม่านจีบ ไปจนถึงม่านพับ",
+    content:`<h2>บทที่ 1: ความรู้พื้นฐานเกี่ยวกับชนิดของผ้าม่าน</h2><p>ผ้าม่านเป็นองค์ประกอบสำคัญของการตกแต่งภายใน ไม่เพียงแต่ช่วยกรองแสง แต่ยังช่วยเสริมความสวยงามให้กับห้อง</p><h3>1. ม่านตาไก่ (Eyelet/Grommet Curtains)</h3><p>ม่านตาไก่เป็นม่านที่มีรูกลมเจาะที่ส่วนบนของผ้า สอดรางม่านผ่านรูเหล่านี้โดยตรง ให้ลุคที่ทันสมัยและสะอาดตา</p><blockquote>💡 <strong>จุดเด่น:</strong> ติดตั้งง่าย เลื่อนเปิด-ปิดสะดวก จีบสม่ำเสมอ</blockquote><h3>2. ม่านจีบ (Pleated Curtains)</h3><p>ม่านจีบเป็นสไตล์คลาสสิก มีหลายแบบ: จีบ 2 นิ้ว จีบ 3 นิ้ว และจีบดินสอ</p><ul><li><strong>จีบ 2 นิ้ว (Pinch Pleat):</strong> ให้ลุคหรูหรา</li><li><strong>จีบ 3 นิ้ว (Triple Pleat):</strong> จีบละเอียด ดูเป็นทางการ</li><li><strong>จีบดินสอ (Pencil Pleat):</strong> จีบเล็กๆ ใช้ได้ทุกสไตล์</li></ul><h3>3. ม่านพับ (Roman Blinds)</h3><p>ม่านพับจะพับเก็บเป็นชั้นๆ เมื่อดึงขึ้น ให้ดูเรียบหรูและประหยัดพื้นที่</p><h3>4. ม่านม้วน (Roller Blinds)</h3><p>ม่านม้วนเป็นม่านที่ม้วนเก็บบนแกนกลม ใช้งานง่าย เหมาะกับออฟฟิศ</p><h3>5. ม่านมู่ลี่ (Venetian Blinds)</h3><p>ประกอบด้วยแผ่นบาง (Slat) เรียงซ้อนกัน ปรับมุมเพื่อควบคุมแสงได้</p>`,downloadUrl:"#",
     quizPool:[
       {q:"ม่านตาไก่มีลักษณะเด่นอย่างไร?",opts:["มีรูกลมเจาะที่ส่วนบน","พับเก็บเป็นชั้นๆ","ม้วนเก็บบนแกนกลม","มีแผ่นบางเรียงซ้อน"],ans:0},
       {q:"ม่านจีบ 3 นิ้ว เหมาะกับห้องแบบไหน?",opts:["ห้องน้ำ","ห้องที่ต้องการความเป็นทางการ","ห้องครัว","ระเบียง"],ans:1},
-      {q:"ม่านพับ (Roman Blinds) มีลักษณะการทำงานอย่างไร?",opts:["ม้วนเก็บบนแกน","พับเก็บเป็นชั้นๆ เมื่อดึงขึ้น","เลื่อนไปด้านข้าง","ปรับมุมแผ่นบาง"],ans:1},
+      {q:"ม่านพับทำงานอย่างไร?",opts:["ม้วนเก็บบนแกน","พับเก็บเป็นชั้นๆ เมื่อดึงขึ้น","เลื่อนไปด้านข้าง","ปรับมุมแผ่นบาง"],ans:1},
       {q:"ม่านมู่ลี่ทำจากวัสดุใดบ้าง?",opts:["ผ้าอย่างเดียว","ไม้ อลูมิเนียม พลาสติก","แก้วอย่างเดียว","หนังสัตว์"],ans:1},
       {q:"Pencil Pleat คือม่านจีบแบบใด?",opts:["จีบใหญ่","จีบเล็กเรียงสม่ำเสมอ","จีบแบบกล่อง","ไม่มีจีบ"],ans:1},
-      {q:"ม่านม้วน (Roller Blinds) เหมาะกับสถานที่ใด?",opts:["พระราชวัง","ออฟฟิศหรือห้องที่ต้องการความเรียบง่าย","วัด","สวนหลังบ้าน"],ans:1},
-      {q:"ปัจจัยในการเลือกชนิดผ้าม่านมีกี่ข้อ?",opts:["2 ข้อ","3 ข้อ","4 ข้อ","5 ข้อ"],ans:1},
-      {q:"Eyelet Curtains อีกชื่อหนึ่งคืออะไร?",opts:["Pinch Pleat","Grommet Curtains","Roman Blinds","Tab Top"],ans:1},
+      {q:"ม่านม้วนเหมาะกับสถานที่ใด?",opts:["พระราชวัง","ออฟฟิศหรือห้องเรียบง่าย","วัด","สวนหลังบ้าน"],ans:1},
+      {q:"ปัจจัยในการเลือกผ้าม่านมีกี่ข้อ?",opts:["2","3","4","5"],ans:1},
+      {q:"Eyelet Curtains อีกชื่อคือ?",opts:["Pinch Pleat","Grommet Curtains","Roman Blinds","Tab Top"],ans:1},
       {q:"ม่านตาไก่เหมาะกับสไตล์ห้องแบบใด?",opts:["คลาสสิก","โมเดิร์น","ชนบท","โกธิก"],ans:1},
       {q:"ข้อใดไม่ใช่ชนิดของม่านจีบ?",opts:["จีบ 2 นิ้ว","จีบ 3 นิ้ว","จีบดินสอ","จีบม้วน"],ans:3},
-      {q:"ม่านพับเหมาะกับหน้าต่างแบบไหน?",opts:["หน้าต่างใหญ่มาก","หน้าต่างที่ไม่ใหญ่มาก","ประตูบานเลื่อน","ช่องแสงบนหลังคา"],ans:1},
-      {q:"ข้อใดเป็นจุดเด่นของม่านตาไก่?",opts:["ราคาแพงที่สุด","ติดตั้งง่าย จีบสม่ำเสมอ","กันเสียงได้ดีที่สุด","ซักรีดง่ายที่สุด"],ans:1},
-    ],
-  },
-  {
-    id:"L2",title:"อุปกรณ์และวัสดุ",icon:"🔧",color:LESSON_COLORS[1],
-    description:"เรียนรู้เกี่ยวกับรางม่าน ตะขอ และอุปกรณ์เสริมต่างๆ ที่จำเป็น",
-    content:`<h2>บทที่ 2: อุปกรณ์และวัสดุสำหรับผ้าม่าน</h2>
-<p>การติดตั้งผ้าม่านให้สวยงามและทนทานต้องอาศัยอุปกรณ์ที่เหมาะสม มาทำความรู้จักกับอุปกรณ์หลักๆ กัน</p>
-
-<h3>1. รางผ้าม่าน (Curtain Tracks)</h3>
-<p>รางม่านเป็นอุปกรณ์หลักที่ยึดผ้าม่านกับผนังหรือเพดาน มีหลายประเภท:</p>
-<ul>
-<li><strong>รางอลูมิเนียม:</strong> เบา แข็งแรง ราคาย่อมเยา นิยมใช้มากที่สุด</li>
-<li><strong>รางไม้:</strong> ให้ความรู้สึกหรูหรา เหมาะกับม่านจีบแบบคลาสสิก</li>
-<li><strong>รางสแตนเลส:</strong> ทนทาน กันสนิม เหมาะกับพื้นที่ชื้น</li>
-<li><strong>รางคู่ (Double Track):</strong> สำหรับแขวนผ้าม่าน 2 ชั้น เช่น ผ้าโปร่ง + ผ้าทึบ</li>
-</ul>
-
-<h3>2. ตะขอม่าน (Curtain Hooks)</h3>
-<p>ตะขอม่านใช้เกี่ยวผ้าม่านกับรางหรือห่วงม่าน มีหลายแบบ เช่น ตะขอเข็ม ตะขอพลาสติก และตะขอสแตนเลส</p>
-<div class="highlight-box">💡 <strong>สำคัญ:</strong> ตะขอม่านจีบต้องเลือกขนาดให้เหมาะกับชนิดจีบ เช่น ตะขอ 4 แฉก สำหรับจีบ 2 นิ้ว</div>
-
-<h3>3. อุปกรณ์เสริม</h3>
-<ul>
-<li><strong>เชือกรัดม่าน (Tiebacks):</strong> ใช้รวบม่านให้เปิดออกสวยงาม</li>
-<li><strong>มอเตอร์ไฟฟ้า:</strong> ระบบเปิด-ปิดม่านอัตโนมัติ ควบคุมด้วยรีโมทหรือสมาร์ทโฟน</li>
-<li><strong>ผ้าซับใน (Lining):</strong> เพิ่มความทึบและช่วยรักษาเนื้อผ้าม่านชั้นนอก</li>
-<li><strong>ตุ้มถ่วง (Curtain Weights):</strong> ช่วยให้ผ้าม่านตกลงตรงและสวยงาม</li>
-</ul>
-
-<div class="info-box">📌 <strong>เคล็ดลับ:</strong> ราง double track เป็นตัวเลือกยอดนิยมเพราะสามารถแขวนทั้งผ้าโปร่งกรองแสงและผ้าทึบกันแสงในรางเดียวกัน</div>`,
-    downloadUrl:"#",
+      {q:"ม่านพับเหมาะกับหน้าต่างแบบไหน?",opts:["หน้าต่างใหญ่มาก","หน้าต่างไม่ใหญ่มาก","ประตูบานเลื่อน","ช่องแสงบนหลังคา"],ans:1},
+      {q:"จุดเด่นของม่านตาไก่คือ?",opts:["ราคาแพงที่สุด","ติดตั้งง่าย จีบสม่ำเสมอ","กันเสียงดีที่สุด","ซักรีดง่ายที่สุด"],ans:1},
+    ]},
+  {id:"L2",title:"อุปกรณ์และวัสดุ",icon:"🔧",color:LESSON_COLORS[1],description:"เรียนรู้เกี่ยวกับรางม่าน ตะขอ และอุปกรณ์เสริมต่างๆ",
+    content:`<h2>บทที่ 2: อุปกรณ์และวัสดุ</h2><p>การติดตั้งผ้าม่านให้สวยงามต้องอาศัยอุปกรณ์ที่เหมาะสม</p><h3>1. รางผ้าม่าน</h3><ul><li><strong>รางอลูมิเนียม:</strong> เบา แข็งแรง นิยมใช้มากที่สุด</li><li><strong>รางไม้:</strong> หรูหรา เหมาะกับม่านคลาสสิก</li><li><strong>รางสแตนเลส:</strong> ทนทาน กันสนิม</li><li><strong>รางคู่ (Double Track):</strong> สำหรับม่าน 2 ชั้น</li></ul><h3>2. ตะขอม่าน</h3><p>ใช้เกี่ยวผ้าม่านกับราง มีหลายแบบ เช่น ตะขอเข็ม ตะขอพลาสติก ตะขอสแตนเลส</p><blockquote>💡 ตะขอม่านจีบต้องเลือกขนาดให้เหมาะกับชนิดจีบ</blockquote><h3>3. อุปกรณ์เสริม</h3><ul><li><strong>เชือกรัดม่าน (Tiebacks)</strong></li><li><strong>มอเตอร์ไฟฟ้า:</strong> ระบบเปิด-ปิดอัตโนมัติ</li><li><strong>ผ้าซับใน (Lining)</strong></li><li><strong>ตุ้มถ่วง:</strong> ช่วยให้ผ้าตกลงตรง</li></ul>`,downloadUrl:"#",
     quizPool:[
       {q:"รางม่านชนิดใดนิยมใช้มากที่สุด?",opts:["รางไม้","รางอลูมิเนียม","รางทองเหลือง","รางพลาสติก"],ans:1},
-      {q:"รางคู่ (Double Track) ใช้สำหรับอะไร?",opts:["แขวนม่าน 2 ชั้น","เพิ่มความแข็งแรง","ประหยัดค่าใช้จ่าย","ตกแต่งเฉยๆ"],ans:0},
+      {q:"รางคู่ใช้สำหรับอะไร?",opts:["แขวนม่าน 2 ชั้น","เพิ่มความแข็งแรง","ประหยัดค่าใช้จ่าย","ตกแต่งเฉยๆ"],ans:0},
       {q:"ตะขอ 4 แฉก เหมาะกับม่านจีบแบบใด?",opts:["จีบดินสอ","จีบ 2 นิ้ว","จีบม้วน","ไม่มีจีบ"],ans:1},
-      {q:"ผ้าซับใน (Lining) มีประโยชน์อย่างไร?",opts:["เพิ่มสีสัน","เพิ่มความทึบและรักษาผ้าชั้นนอก","ลดน้ำหนัก","เพิ่มลวดลาย"],ans:1},
-      {q:"อุปกรณ์ใดช่วยให้ม่านตกลงตรง?",opts:["เชือกรัด","มอเตอร์","ตุ้มถ่วง","ตะขอ"],ans:2},
-      {q:"รางสแตนเลสเหมาะกับพื้นที่แบบไหน?",opts:["พื้นที่แห้ง","พื้นที่ชื้น","พื้นที่ร้อน","ทุกพื้นที่เท่ากัน"],ans:1},
+      {q:"ผ้าซับในมีประโยชน์อย่างไร?",opts:["เพิ่มสีสัน","เพิ่มความทึบและรักษาผ้า","ลดน้ำหนัก","เพิ่มลวดลาย"],ans:1},
+      {q:"อุปกรณ์ใดช่วยให้ม่านตกตรง?",opts:["เชือกรัด","มอเตอร์","ตุ้มถ่วง","ตะขอ"],ans:2},
+      {q:"รางสแตนเลสเหมาะกับพื้นที่แบบไหน?",opts:["พื้นที่แห้ง","พื้นที่ชื้น","พื้นที่ร้อน","ทุกพื้นที่"],ans:1},
       {q:"Tiebacks คืออะไร?",opts:["ตะขอม่าน","เชือกรัดม่าน","รางม่าน","ผ้าซับใน"],ans:1},
-      {q:"มอเตอร์ไฟฟ้าม่านควบคุมด้วยอะไร?",opts:["เฉพาะรีโมท","เฉพาะสมาร์ทโฟน","รีโมทหรือสมาร์ทโฟน","ต้องดึงมือเท่านั้น"],ans:2},
-      {q:"รางไม้เหมาะกับสไตล์ม่านแบบใด?",opts:["โมเดิร์น","คลาสสิก","อินดัสเทรียล","มินิมอล"],ans:1},
-      {q:"ข้อใดไม่ใช่อุปกรณ์เสริมสำหรับผ้าม่าน?",opts:["เชือกรัด","ผ้าซับใน","มอเตอร์","บานพับ"],ans:3},
+      {q:"มอเตอร์ม่านควบคุมด้วยอะไร?",opts:["เฉพาะรีโมท","เฉพาะสมาร์ทโฟน","รีโมทหรือสมาร์ทโฟน","ดึงมือเท่านั้น"],ans:2},
+      {q:"รางไม้เหมาะกับสไตล์ม่านใด?",opts:["โมเดิร์น","คลาสสิก","อินดัสเทรียล","มินิมอล"],ans:1},
+      {q:"ข้อใดไม่ใช่อุปกรณ์เสริม?",opts:["เชือกรัด","ผ้าซับใน","มอเตอร์","บานพับ"],ans:3},
       {q:"ตะขอเข็มทำจากวัสดุใด?",opts:["ไม้","โลหะ","กระดาษ","ยาง"],ans:1},
       {q:"ทำไมต้องใช้ตุ้มถ่วงม่าน?",opts:["เพิ่มน้ำหนักให้ม่านตกตรง","กันขโมย","ลดเสียง","ดูดฝุ่น"],ans:0},
-    ],
-  },
-  {
-    id:"L3",title:"การวัดขนาด",icon:"📏",color:LESSON_COLORS[2],
-    description:"หลักการวัดขนาดหน้าต่างและประตูอย่างละเอียดสำหรับการสั่งตัดม่าน",
-    content:`<h2>บทที่ 3: หลักการวัดขนาดหน้าต่างและประตู</h2>
-<p>การวัดขนาดที่ถูกต้องเป็นหัวใจของการทำม่านที่สวยงามและพอดี ข้อผิดพลาดเพียงเล็กน้อยอาจทำให้ม่านสั้นเกินไป ยาวเกินไป หรือไม่เข้ากับหน้าต่าง</p>
-
-<h3>1. เครื่องมือที่จำเป็น</h3>
-<ul>
-<li>ตลับเมตร (อย่างน้อย 5 เมตร)</li>
-<li>สมุดจดและปากกา</li>
-<li>บันได (สำหรับหน้าต่างสูง)</li>
-<li>ระดับน้ำ (Level) เพื่อตรวจความตรง</li>
-</ul>
-
-<h3>2. วิธีวัดความกว้าง</h3>
-<p>วัดจากขอบนอกของวงกบหน้าต่างด้านซ้ายไปถึงด้านขวา แล้วเผื่อด้านละ <strong>15-20 ซม.</strong> เพื่อให้ม่านปิดได้มิดชิดและดูเต็มอิ่ม</p>
-<div class="highlight-box">💡 <strong>สูตร:</strong> ความกว้างรางม่าน = ความกว้างวงกบ + (15~20 ซม. × 2 ข้าง)</div>
-
-<h3>3. วิธีวัดความยาว (ความสูง)</h3>
-<p>การวัดความยาวขึ้นอยู่กับสไตล์ที่ต้องการ:</p>
-<ul>
-<li><strong>ม่านระดับขอบหน้าต่าง:</strong> วัดจากตำแหน่งรางถึงขอบล่างหน้าต่าง</li>
-<li><strong>ม่านต่ำกว่าหน้าต่าง:</strong> เพิ่มอีก 15-20 ซม. จากขอบล่าง</li>
-<li><strong>ม่านยาวถึงพื้น:</strong> วัดจากตำแหน่งรางถึงพื้น แล้วหักออก 1-2 ซม.</li>
-<li><strong>ม่านยาวกองพื้น (Puddle):</strong> เพิ่มอีก 5-15 ซม. จากพื้น</li>
-</ul>
-
-<h3>4. จุดที่ต้องระวัง</h3>
-<ul>
-<li>วัดอย่างน้อย 3 จุด (ซ้าย กลาง ขวา) เพราะกำแพงอาจไม่ตรง</li>
-<li>ใช้ค่าที่สั้นที่สุดเป็นเกณฑ์</li>
-<li>ตรวจสอบสิ่งกีดขวาง เช่น หม้อน้ำ เฟอร์นิเจอร์ ราวตากผ้า</li>
-</ul>
-
-<div class="info-box">📌 <strong>เคล็ดลับ:</strong> เขียนแบบร่างง่ายๆ (Sketch) พร้อมเลขขนาดทุกครั้ง จะช่วยลดข้อผิดพลาดได้มาก</div>`,
-    downloadUrl:"#",
+    ]},
+  {id:"L3",title:"การวัดขนาด",icon:"📏",color:LESSON_COLORS[2],description:"หลักการวัดขนาดหน้าต่างและประตูอย่างละเอียด",
+    content:`<h2>บทที่ 3: การวัดขนาดหน้าต่างและประตู</h2><p>การวัดขนาดที่ถูกต้องเป็นหัวใจของการทำม่านที่สวยงามและพอดี</p><h3>1. เครื่องมือที่จำเป็น</h3><ul><li>ตลับเมตร (อย่างน้อย 5 เมตร)</li><li>สมุดจดและปากกา</li><li>บันได</li><li>ระดับน้ำ (Level)</li></ul><h3>2. วิธีวัดความกว้าง</h3><p>วัดจากขอบนอกของวงกบ แล้วเผื่อด้านละ <strong>15-20 ซม.</strong></p><blockquote>💡 ความกว้างราง = ความกว้างวงกบ + (15~20 ซม. × 2 ข้าง)</blockquote><h3>3. วิธีวัดความยาว</h3><ul><li><strong>ม่านระดับขอบหน้าต่าง:</strong> วัดจากรางถึงขอบล่าง</li><li><strong>ม่านยาวถึงพื้น:</strong> วัดจากรางถึงพื้น หักออก 1-2 ซม.</li><li><strong>ม่านกองพื้น (Puddle):</strong> เพิ่มอีก 5-15 ซม.</li></ul><h3>4. จุดที่ต้องระวัง</h3><ul><li>วัดอย่างน้อย 3 จุด</li><li>ใช้ค่าที่สั้นที่สุดเป็นเกณฑ์</li><li>ตรวจสอบสิ่งกีดขวาง</li></ul>`,downloadUrl:"#",
     quizPool:[
       {q:"ควรเผื่อความกว้างม่านด้านละเท่าไหร่?",opts:["5-10 ซม.","15-20 ซม.","30-40 ซม.","50 ซม."],ans:1},
       {q:"ม่านยาวถึงพื้นควรหักออกกี่ ซม.?",opts:["1-2 ซม.","5-10 ซม.","15-20 ซม.","ไม่ต้องหัก"],ans:0},
-      {q:"ควรวัดความยาวกี่จุดอย่างน้อย?",opts:["1 จุด","2 จุด","3 จุด","5 จุด"],ans:2},
-      {q:"เครื่องมือใดใช้ตรวจความตรง?",opts:["ตลับเมตร","ระดับน้ำ","ไม้บรรทัด","เชือก"],ans:1},
-      {q:"ม่านแบบ Puddle เพิ่มความยาวจากพื้นอีกเท่าไหร่?",opts:["1-2 ซม.","5-15 ซม.","30-40 ซม.","ไม่เพิ่ม"],ans:1},
-      {q:"วัดความกว้างจากจุดไหนถึงจุดไหน?",opts:["ขอบในวงกบ","ขอบนอกวงกบ","กึ่งกลางวงกบ","จากพื้นถึงเพดาน"],ans:1},
+      {q:"ควรวัดกี่จุดอย่างน้อย?",opts:["1","2","3","5"],ans:2},
+      {q:"เครื่องมือใดตรวจความตรง?",opts:["ตลับเมตร","ระดับน้ำ","ไม้บรรทัด","เชือก"],ans:1},
+      {q:"ม่าน Puddle เพิ่มความยาวจากพื้นอีกเท่าไหร่?",opts:["1-2 ซม.","5-15 ซม.","30-40 ซม.","ไม่เพิ่ม"],ans:1},
+      {q:"วัดความกว้างจากจุดไหน?",opts:["ขอบในวงกบ","ขอบนอกวงกบ","กึ่งกลาง","จากพื้นถึงเพดาน"],ans:1},
       {q:"ทำไมต้องวัดหลายจุด?",opts:["เพื่อความสนุก","เพราะกำแพงอาจไม่ตรง","เพื่อความสวย","ไม่จำเป็น"],ans:1},
-      {q:"ควรใช้ค่าวัดไหนเป็นเกณฑ์?",opts:["ค่าที่ยาวที่สุด","ค่าเฉลี่ย","ค่าที่สั้นที่สุด","ค่ากลาง"],ans:2},
-      {q:"ตลับเมตรควรยาวอย่างน้อยกี่เมตร?",opts:["2 เมตร","3 เมตร","5 เมตร","10 เมตร"],ans:2},
-      {q:"สิ่งใดไม่ใช่สิ่งที่ต้องระวังเมื่อวัดม่าน?",opts:["หม้อน้ำ","เฟอร์นิเจอร์","สีผนัง","ราวตากผ้า"],ans:2},
-      {q:"สูตรความกว้างรางม่านคืออะไร?",opts:["ความกว้างวงกบ × 2","ความกว้างวงกบ + เผื่อ 2 ข้าง","ความกว้างวงกบ - 10","ความกว้างวงกบ ÷ 2"],ans:1},
-      {q:"ม่านต่ำกว่าหน้าต่างเพิ่มอีกเท่าไหร่จากขอบล่าง?",opts:["1-2 ซม.","5-10 ซม.","15-20 ซม.","ไม่ต้องเพิ่ม"],ans:2},
-    ],
-  },
-  {
-    id:"L4",title:"สูตรคำนวณผ้า",icon:"🧮",color:LESSON_COLORS[3],
-    description:"เรียนรู้สูตรการคำนวณปริมาณผ้าม่าน การเผื่อจีบ และความกว้างหน้าผ้า",
-    content:`<h2>บทที่ 4: สูตรการคำนวณปริมาณผ้า</h2>
-<p>การคำนวณปริมาณผ้าม่านอย่างถูกต้องจะช่วยให้ไม่สั่งผ้ามากเกินไป หรือขาด มาเรียนรู้สูตรที่ใช้ในงานจริงกัน</p>
-
-<h3>1. ความกว้างผ้าที่ต้องใช้</h3>
-<p>ขึ้นอยู่กับ "อัตราจีบ" (Fullness Ratio) ที่ต้องการ:</p>
-<ul>
-<li><strong>ม่านจีบ 2 นิ้ว:</strong> ใช้ผ้า 2-2.5 เท่าของความกว้างราง</li>
-<li><strong>ม่านจีบ 3 นิ้ว:</strong> ใช้ผ้า 2.5-3 เท่าของความกว้างราง</li>
-<li><strong>ม่านตาไก่:</strong> ใช้ผ้า 1.5-2 เท่าของความกว้างราง</li>
-<li><strong>ม่านจีบดินสอ:</strong> ใช้ผ้า 2-2.5 เท่าของความกว้างราง</li>
-</ul>
-<div class="highlight-box">💡 <strong>สูตร:</strong> ความกว้างผ้ารวม = ความกว้างราง × อัตราจีบ</div>
-
-<h3>2. จำนวนหน้าผ้า (Width/Drop)</h3>
-<p>ผ้าม่านมักมีหน้ากว้างมาตรฐาน (เช่น 140 ซม. หรือ 280 ซม.) ต้องคำนวณว่าจะใช้กี่หน้า:</p>
-<div class="highlight-box">💡 <strong>สูตร:</strong> จำนวนหน้าผ้า = ความกว้างผ้ารวม ÷ หน้ากว้างผ้า (ปัดขึ้นเสมอ)</div>
-
-<h3>3. ความยาวผ้าต่อหน้า</h3>
-<p>ต้องเผื่อสำหรับ:</p>
-<ul>
-<li>ค่าพับแนวนอน (หัว-ท้าย): เผื่อ 20-30 ซม.</li>
-<li>ค่า Pattern Repeat (ถ้าผ้ามีลาย): เพิ่มตามรอบลาย</li>
-</ul>
-<div class="highlight-box">💡 <strong>สูตร:</strong> ความยาวต่อหน้า = ความสูงม่าน + ค่าพับ(20-30ซม.) + Pattern Repeat</div>
-
-<h3>4. ปริมาณผ้ารวม</h3>
-<div class="highlight-box">💡 <strong>สูตร:</strong> ปริมาณผ้ารวม (เมตร) = จำนวนหน้า × ความยาวต่อหน้า ÷ 100</div>
-
-<div class="info-box">📌 <strong>ตัวอย่าง:</strong> ราง 3 เมตร, ม่านจีบ 2 นิ้ว (×2.5), ผ้าหน้ากว้าง 140 ซม., สูง 260 ซม.<br/>
-ความกว้างรวม = 300×2.5 = 750 ซม.<br/>
-จำนวนหน้า = 750÷140 = 5.36 → ปัดเป็น 6 หน้า<br/>
-ความยาว/หน้า = 260+25 = 285 ซม.<br/>
-ผ้ารวม = 6×285÷100 = 17.1 เมตร</div>`,
-    downloadUrl:"#",
+      {q:"ควรใช้ค่าวัดไหนเป็นเกณฑ์?",opts:["ค่ายาวสุด","ค่าเฉลี่ย","ค่าสั้นสุด","ค่ากลาง"],ans:2},
+      {q:"ตลับเมตรควรยาวอย่างน้อยกี่เมตร?",opts:["2","3","5","10"],ans:2},
+      {q:"สิ่งใดไม่ต้องระวังเมื่อวัดม่าน?",opts:["หม้อน้ำ","เฟอร์นิเจอร์","สีผนัง","ราวตากผ้า"],ans:2},
+      {q:"สูตรความกว้างรางม่านคือ?",opts:["กว้างวงกบ × 2","กว้างวงกบ + เผื่อ 2 ข้าง","กว้างวงกบ - 10","กว้างวงกบ ÷ 2"],ans:1},
+      {q:"ม่านต่ำกว่าหน้าต่างเพิ่มอีกเท่าไหร่?",opts:["1-2 ซม.","5-10 ซม.","15-20 ซม.","ไม่เพิ่ม"],ans:2},
+    ]},
+  {id:"L4",title:"สูตรคำนวณผ้า",icon:"🧮",color:LESSON_COLORS[3],description:"สูตรคำนวณปริมาณผ้า การเผื่อจีบ ความกว้างหน้าผ้า",
+    content:`<h2>บทที่ 4: สูตรการคำนวณปริมาณผ้า</h2><p>การคำนวณที่ถูกต้องจะช่วยให้ไม่สั่งผ้ามากหรือน้อยเกินไป</p><h3>1. ความกว้างผ้า</h3><ul><li><strong>ม่านจีบ 2 นิ้ว:</strong> ×2-2.5</li><li><strong>ม่านจีบ 3 นิ้ว:</strong> ×2.5-3</li><li><strong>ม่านตาไก่:</strong> ×1.5-2</li></ul><blockquote>💡 ความกว้างผ้ารวม = ความกว้างราง × อัตราจีบ</blockquote><h3>2. จำนวนหน้าผ้า</h3><blockquote>จำนวนหน้า = ความกว้างผ้ารวม ÷ หน้ากว้างผ้า (ปัดขึ้น)</blockquote><h3>3. ความยาวต่อหน้า</h3><blockquote>ความยาว = ความสูงม่าน + ค่าพับ(20-30ซม.) + Pattern Repeat</blockquote><h3>4. ปริมาณผ้ารวม</h3><blockquote>ผ้ารวม (เมตร) = จำนวนหน้า × ความยาวต่อหน้า ÷ 100</blockquote>`,downloadUrl:"#",
     quizPool:[
-      {q:"ม่านจีบ 2 นิ้ว ใช้อัตราจีบเท่าไหร่?",opts:["1-1.5 เท่า","1.5-2 เท่า","2-2.5 เท่า","3-3.5 เท่า"],ans:2},
-      {q:"ม่านตาไก่ใช้อัตราจีบเท่าไหร่?",opts:["1.5-2 เท่า","2-2.5 เท่า","2.5-3 เท่า","3 เท่า"],ans:0},
-      {q:"เมื่อคำนวณจำนวนหน้าผ้าต้องทำอย่างไร?",opts:["ปัดลง","ปัดขึ้นเสมอ","ใช้ค่าทศนิยม","หารครึ่ง"],ans:1},
-      {q:"ค่าพับแนวนอนเผื่อกี่ ซม.?",opts:["5-10 ซม.","10-15 ซม.","20-30 ซม.","40-50 ซม."],ans:2},
-      {q:"หน้ากว้างผ้ามาตรฐานคือเท่าไหร่?",opts:["100 หรือ 200 ซม.","140 หรือ 280 ซม.","160 หรือ 300 ซม.","120 หรือ 240 ซม."],ans:1},
+      {q:"ม่านจีบ 2 นิ้ว ใช้อัตราจีบเท่าไหร่?",opts:["1-1.5","1.5-2","2-2.5","3-3.5"],ans:2},
+      {q:"ม่านตาไก่ใช้อัตราจีบเท่าไหร่?",opts:["1.5-2","2-2.5","2.5-3","3"],ans:0},
+      {q:"คำนวณหน้าผ้าต้องทำอย่างไร?",opts:["ปัดลง","ปัดขึ้น","ใช้ทศนิยม","หารครึ่ง"],ans:1},
+      {q:"ค่าพับแนวนอนเผื่อกี่ ซม.?",opts:["5-10","10-15","20-30","40-50"],ans:2},
+      {q:"หน้ากว้างผ้ามาตรฐานคือ?",opts:["100/200 ซม.","140/280 ซม.","160/300 ซม.","120/240 ซม."],ans:1},
       {q:"Pattern Repeat คืออะไร?",opts:["การทำซ้ำขั้นตอน","รอบลายของผ้า","ชื่อยี่ห้อผ้า","แบบตัดเย็บ"],ans:1},
-      {q:"ราง 2 ม. ม่านจีบ 2 นิ้ว (×2.5) ความกว้างผ้ารวมเท่าไหร่?",opts:["300 ซม.","400 ซม.","500 ซม.","600 ซม."],ans:2},
-      {q:"สูตรปริมาณผ้ารวมคืออะไร?",opts:["หน้า × ยาว/100","หน้า × กว้าง","กว้าง × สูง","กว้าง × จีบ"],ans:0},
-      {q:"ม่านจีบ 3 นิ้ว ใช้อัตราจีบเท่าไหร่?",opts:["1.5-2","2-2.5","2.5-3","3-3.5"],ans:2},
-      {q:"ความกว้างผ้ารวมคำนวณจากอะไร?",opts:["ความกว้างหน้าต่าง × จีบ","ความกว้างราง × อัตราจีบ","ความยาวม่าน × จีบ","ความสูงห้อง × จีบ"],ans:1},
-      {q:"ถ้าผ้าไม่มีลาย ค่า Pattern Repeat เป็นเท่าไหร่?",opts:["10 ซม.","20 ซม.","0 (ไม่ต้องเพิ่ม)","30 ซม."],ans:2},
-      {q:"ม่านจีบดินสอใช้อัตราจีบเท่าไหร่?",opts:["1-1.5 เท่า","2-2.5 เท่า","3 เท่า","0.5 เท่า"],ans:1},
-    ],
-  },
-  {
-    id:"L5",title:"การประมาณราคา",icon:"💰",color:LESSON_COLORS[4],
-    description:"เรียนรู้การคิดราคาผ้าม่าน ค่าแรง และการเสนอราคาให้ลูกค้า",
-    content:`<h2>บทที่ 5: การประมาณราคาและการเสนอราคาลูกค้า</h2>
-<p>ทักษะที่สำคัญไม่แพ้การตัดเย็บคือการคิดราคาและจัดทำใบเสนอราคาที่ถูกต้อง เป็นมืออาชีพ</p>
-
-<h3>1. โครงสร้างราคาผ้าม่าน</h3>
-<ul>
-<li><strong>ค่าผ้า:</strong> คิดตามเมตร ราคาต่อเมตรขึ้นกับชนิดผ้า (200-2,000+ บาท/เมตร)</li>
-<li><strong>ค่าตัดเย็บ:</strong> คิดตามหน้าผ้าหรือตารางเมตร (150-500 บาท/หน้า)</li>
-<li><strong>ค่าอุปกรณ์:</strong> ราง ตะขอ ตุ้มถ่วง ฯลฯ</li>
-<li><strong>ค่าติดตั้ง:</strong> คิดตามจุดหรือแบบเหมา</li>
-</ul>
-
-<h3>2. ตัวอย่างการคิดราคา</h3>
-<div class="highlight-box">
-💡 <strong>ตัวอย่าง:</strong> ม่านจีบ 2 นิ้ว, ราง 3 ม., สูง 2.6 ม., ผ้า 450 บ./ม.<br/>
-• ผ้ารวม 17.1 ม. × 450 = 7,695 บาท<br/>
-• ค่าเย็บ 6 หน้า × 300 = 1,800 บาท<br/>
-• ราง 3 ม. × 250 = 750 บาท<br/>
-• อุปกรณ์ + ค่าติด = 800 บาท<br/>
-• <strong>รวมทั้งหมด = 11,045 บาท</strong>
-</div>
-
-<h3>3. การจัดทำใบเสนอราคา</h3>
-<p>ใบเสนอราคาที่ดีควรมีรายละเอียดครบถ้วน:</p>
-<ul>
-<li>ชื่อ-ที่อยู่ลูกค้าและผู้ขาย</li>
-<li>รายการแยกชัดเจน (ค่าผ้า, ค่าเย็บ, ค่าราง, ค่าติดตั้ง)</li>
-<li>ขนาดและชนิดม่านแต่ละจุด</li>
-<li>ระยะเวลาการผลิตและติดตั้ง</li>
-<li>เงื่อนไขการชำระเงิน</li>
-<li>การรับประกัน</li>
-</ul>
-
-<h3>4. เทคนิคการเสนอราคา</h3>
-<ul>
-<li>เสนอทั้งแบบประหยัดและแบบพรีเมียม ให้ลูกค้าเลือก</li>
-<li>อย่าลืมเผื่อกำไร 20-40% ขึ้นกับตลาด</li>
-<li>รวม VAT ถ้าจดทะเบียนภาษี</li>
-</ul>
-
-<div class="info-box">📌 <strong>เคล็ดลับ:</strong> การเสนอราคาแบบ Package (รวมผ้า+เย็บ+ราง+ติดตั้ง) จะดึงดูดลูกค้าได้ดีกว่าการแยกรายการ เพราะลูกค้าเห็นราคารวมแล้วตัดสินใจได้ง่ายกว่า</div>`,
-    downloadUrl:"#",
+      {q:"ราง 2 ม. ×2.5 ความกว้างผ้ารวม?",opts:["300 ซม.","400 ซม.","500 ซม.","600 ซม."],ans:2},
+      {q:"สูตรผ้ารวมคือ?",opts:["หน้า × ยาว/100","หน้า × กว้าง","กว้าง × สูง","กว้าง × จีบ"],ans:0},
+      {q:"ม่านจีบ 3 นิ้ว ใช้อัตราจีบ?",opts:["1.5-2","2-2.5","2.5-3","3-3.5"],ans:2},
+      {q:"ความกว้างผ้ารวมคำนวณจาก?",opts:["กว้างหน้าต่าง × จีบ","กว้างราง × อัตราจีบ","ยาวม่าน × จีบ","สูงห้อง × จีบ"],ans:1},
+      {q:"ผ้าไม่มีลาย Pattern Repeat =?",opts:["10 ซม.","20 ซม.","0","30 ซม."],ans:2},
+      {q:"ม่านจีบดินสอใช้อัตราจีบ?",opts:["1-1.5","2-2.5","3","0.5"],ans:1},
+    ]},
+  {id:"L5",title:"การประมาณราคา",icon:"💰",color:LESSON_COLORS[4],description:"การคิดราคาผ้าม่าน ค่าแรง และการเสนอราคาลูกค้า",
+    content:`<h2>บทที่ 5: การประมาณราคาและเสนอราคา</h2><p>ทักษะสำคัญคือการคิดราคาและจัดทำใบเสนอราคา</p><h3>1. โครงสร้างราคา</h3><ul><li><strong>ค่าผ้า:</strong> 200-2,000+ บาท/เมตร</li><li><strong>ค่าตัดเย็บ:</strong> 150-500 บาท/หน้า</li><li><strong>ค่าอุปกรณ์:</strong> ราง ตะขอ ตุ้มถ่วง</li><li><strong>ค่าติดตั้ง:</strong> คิดตามจุดหรือเหมา</li></ul><h3>2. ใบเสนอราคา</h3><ul><li>ชื่อ-ที่อยู่ลูกค้าและผู้ขาย</li><li>รายการแยกชัดเจน</li><li>ระยะเวลาผลิตและติดตั้ง</li><li>เงื่อนไขชำระเงิน</li></ul><blockquote>💡 การเสนอราคาแบบ Package จะดึงดูดลูกค้าได้ดีกว่า</blockquote>`,downloadUrl:"#",
     quizPool:[
-      {q:"ค่าตัดเย็บม่านคิดตามอะไร?",opts:["ตารางเมตรเท่านั้น","หน้าผ้าหรือตารางเมตร","กิโลกรัม","ชิ้น"],ans:1},
-      {q:"ราคาผ้าม่านต่อเมตรอยู่ในช่วงใด?",opts:["50-100 บาท","200-2,000+ บาท","5,000-10,000 บาท","10-50 บาท"],ans:1},
-      {q:"กำไรที่ควรเผื่อคือเท่าไหร่?",opts:["5-10%","10-15%","20-40%","50-80%"],ans:2},
-      {q:"ใบเสนอราคาที่ดีควรมีอะไร?",opts:["ราคารวมอย่างเดียว","รายละเอียดครบทุกรายการ","เฉพาะค่าผ้า","เฉพาะค่าแรง"],ans:1},
-      {q:"การเสนอราคาแบบ Package คืออะไร?",opts:["ขายเฉพาะผ้า","รวมทุกอย่างในราคาเดียว","ขายอุปกรณ์อย่างเดียว","แยกทุกรายการ"],ans:1},
-      {q:"ค่าติดตั้งม่านคิดอย่างไร?",opts:["คิดตามจุดหรือเหมา","ฟรีเสมอ","คิดตามน้ำหนัก","คิดตามสี"],ans:0},
-      {q:"ข้อใดไม่ใช่ส่วนประกอบของราคาม่าน?",opts:["ค่าผ้า","ค่าเย็บ","ค่าประกันชีวิต","ค่าราง"],ans:2},
-      {q:"ทำไมควรเสนอทั้งแบบประหยัดและพรีเมียม?",opts:["เพื่อให้ลูกค้ามีทางเลือก","เพื่อสร้างความสับสน","เพื่อเพิ่มงาน","ไม่จำเป็น"],ans:0},
+      {q:"ค่าตัดเย็บคิดตามอะไร?",opts:["ตารางเมตรเท่านั้น","หน้าผ้าหรือตารางเมตร","กิโลกรัม","ชิ้น"],ans:1},
+      {q:"ราคาผ้าม่านต่อเมตรช่วงใด?",opts:["50-100","200-2,000+","5,000-10,000","10-50"],ans:1},
+      {q:"กำไรที่ควรเผื่อ?",opts:["5-10%","10-15%","20-40%","50-80%"],ans:2},
+      {q:"ใบเสนอราคาควรมีอะไร?",opts:["ราคารวมอย่างเดียว","รายละเอียดครบ","เฉพาะค่าผ้า","เฉพาะค่าแรง"],ans:1},
+      {q:"Package คืออะไร?",opts:["ขายเฉพาะผ้า","รวมทุกอย่างในราคาเดียว","ขายอุปกรณ์","แยกทุกรายการ"],ans:1},
+      {q:"ค่าติดตั้งคิดอย่างไร?",opts:["คิดตามจุดหรือเหมา","ฟรี","ตามน้ำหนัก","ตามสี"],ans:0},
+      {q:"ข้อใดไม่ใช่ส่วนของราคาม่าน?",opts:["ค่าผ้า","ค่าเย็บ","ค่าประกันชีวิต","ค่าราง"],ans:2},
+      {q:"ทำไมเสนอทั้งแบบประหยัดและพรีเมียม?",opts:["ให้ลูกค้ามีทางเลือก","สร้างความสับสน","เพิ่มงาน","ไม่จำเป็น"],ans:0},
       {q:"VAT ต้องรวมเมื่อไหร่?",opts:["ทุกกรณี","เมื่อจดทะเบียนภาษี","ไม่ต้องรวม","เมื่อลูกค้าขอ"],ans:1},
       {q:"เงื่อนไขใดควรระบุในใบเสนอราคา?",opts:["การชำระเงิน","สูตรอาหาร","ประวัติช่าง","เบอร์โทรเพื่อน"],ans:0},
-      {q:"ค่าอุปกรณ์รวมอะไรบ้าง?",opts:["ราง ตะขอ ตุ้มถ่วง","เฟอร์นิเจอร์","สีทาบ้าน","กระเบื้อง"],ans:0},
-      {q:"ระยะเวลาการผลิตควรระบุไว้ที่ไหน?",opts:["นามบัตร","ใบเสนอราคา","โซเชียลมีเดีย","ไม่จำเป็น"],ans:1},
-    ],
-  },
+      {q:"ค่าอุปกรณ์รวมอะไร?",opts:["ราง ตะขอ ตุ้มถ่วง","เฟอร์นิเจอร์","สีทาบ้าน","กระเบื้อง"],ans:0},
+      {q:"ระยะเวลาผลิตระบุไว้ที่ไหน?",opts:["นามบัตร","ใบเสนอราคา","โซเชียล","ไม่จำเป็น"],ans:1},
+    ]},
 ];
 
-/* Game: matching pairs */
-const GAME_PAIRS = [
-  {id:1,text:"ม่านตาไก่",match:"Eyelet"},
-  {id:2,text:"ม่านจีบ",match:"Pleated"},
-  {id:3,text:"ม่านพับ",match:"Roman"},
-  {id:4,text:"ม่านม้วน",match:"Roller"},
-  {id:5,text:"ม่านมู่ลี่",match:"Venetian"},
-  {id:6,text:"รางอลูมิเนียม",match:"Aluminum Track"},
-  {id:7,text:"ตะขอม่าน",match:"Hook"},
-  {id:8,text:"ผ้าซับใน",match:"Lining"},
+const GAME_PAIRS=[
+  {id:1,text:"ม่านตาไก่",match:"Eyelet"},{id:2,text:"ม่านจีบ",match:"Pleated"},
+  {id:3,text:"ม่านพับ",match:"Roman"},{id:4,text:"ม่านม้วน",match:"Roller"},
+  {id:5,text:"ม่านมู่ลี่",match:"Venetian"},{id:6,text:"รางอลูมิเนียม",match:"Aluminum Track"},
+  {id:7,text:"ตะขอม่าน",match:"Hook"},{id:8,text:"ผ้าซับใน",match:"Lining"},
 ];
 
-/* ════════════════════════════════════════════
-   CONTEXT & HOOKS
-   ════════════════════════════════════════════ */
-const AppContext = createContext();
-
+/* ══════ HOOKS ══════ */
 function useToast(){
   const [toasts,setToasts]=useState([]);
   const addToast=useCallback((msg,type="success")=>{
@@ -719,650 +389,334 @@ function useToast(){
     setToasts(p=>[...p,{id,msg,type}]);
     setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3000);
   },[]);
-  return {toasts,addToast};
+  return{toasts,addToast};
 }
-
 function Toast({toasts}){
-  if(!toasts.length) return null;
+  if(!toasts.length)return null;
   return <div className="toast-container">{toasts.map(t=>(
-    <div key={t.id} className={`toast toast-${t.type}`}>
-      {t.type==="success"?"✓":t.type==="error"?"✗":"ℹ"} {t.msg}
-    </div>
+    <div key={t.id} className={`toast toast-${t.type}`}>{t.type==="success"?"✓":t.type==="error"?"✗":"ℹ"} {t.msg}</div>
   ))}</div>;
 }
-
-/* ════════════════════════════════════════════
-   COMPONENTS
-   ════════════════════════════════════════════ */
-
-/* ──── Login ──── */
-function LoginPage({onLogin,users}){
-  const [email,setEmail]=useState("");
-  const [pass,setPass]=useState("");
-  const [err,setErr]=useState("");
-
-  const handleLogin=(e)=>{
-    e.preventDefault();
-    const u=users.find(u=>u.email===email && u.password===pass);
-    if(u) onLogin(u);
-    else setErr("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-  };
-
-  return(
-    <div className="login-wrap">
-      <div className="login-bg"/>
-      <div className="login-curtain"/>
-      <div className="login-card">
-        <div className="login-logo">
-          <div style={{fontSize:"3rem",marginBottom:12}}>🪟</div>
-          <h1 className="font-display">Curtain Academy</h1>
-          <p>ระบบเรียนรู้ผ้าม่านออนไลน์</p>
-        </div>
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label className="label">อีเมล</label>
-            <input className="input" type="email" placeholder="your@email.com" value={email} onChange={e=>{setEmail(e.target.value);setErr("")}}/>
-          </div>
-          <div className="form-group">
-            <label className="label">รหัสผ่าน</label>
-            <input className="input" type="password" placeholder="••••••" value={pass} onChange={e=>{setPass(e.target.value);setErr("")}}/>
-          </div>
-          {err && <p style={{color:"#e74c3c",fontSize:".85rem",marginBottom:12}}>{err}</p>}
-          <button type="submit" className="btn btn-gold btn-lg" style={{width:"100%",justifyContent:"center"}}>
-            เข้าสู่ระบบ
-          </button>
-        </form>
-        <div className="login-hint">
-          <p><strong style={{color:"var(--gold)"}}>บัญชีทดสอบ:</strong></p>
-          <p><code>admin@curtain.com</code> / <code>1234</code> (ผู้ดูแล)</p>
-          <p><code>instructor@curtain.com</code> / <code>1234</code> (ผู้สอน)</p>
-          <p><code>student@curtain.com</code> / <code>1234</code> (ผู้เรียน)</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ──── Navigation ──── */
-function Navbar({user,page,setPage,onLogout}){
-  const [mobileOpen,setMobileOpen]=useState(false);
-  const links = user.role==="admin"
-    ? [{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"users",label:"จัดการผู้ใช้"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
-    : user.role==="instructor"
-    ? [{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
-    : [{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}];
-
-  return(
-    <nav className="nav">
-      <div className="nav-inner">
-        <div className="nav-brand" style={{cursor:"pointer"}} onClick={()=>setPage("dashboard")}>
-          <span>🪟</span>
-          <span>Curtain Academy</span>
-        </div>
-        <button className="nav-mobile-toggle" onClick={()=>setMobileOpen(!mobileOpen)}>☰</button>
-        <div className={`nav-links ${mobileOpen?"open":""}`}>
-          {links.map(l=>(
-            <button key={l.id} className={`nav-link ${page===l.id?"active":""}`}
-              onClick={()=>{setPage(l.id);setMobileOpen(false)}}>
-              {l.label}
-            </button>
-          ))}
-        </div>
-        <div className="nav-user">
-          <span>{user.name}</span>
-          <div className="nav-avatar">{user.name[0]}</div>
-          <button className="btn btn-sm" style={{background:"rgba(255,255,255,.1)",color:"var(--gold)",border:"1px solid rgba(200,164,78,.3)"}} onClick={onLogout}>ออก</button>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-/* ──── Dashboard ──── */
-function Dashboard({user,lessons,progress,users}){
-  const completedCount = Object.values(progress).filter(v=>v===true).length;
-  return(
-    <div className="container fade-in">
-      <div className="page-header">
-        <h1 className="page-title font-display">สวัสดีครับ, {user.name} 👋</h1>
-        <p className="page-sub">
-          {user.role==="admin"?"ยินดีต้อนรับผู้ดูแลระบบ":
-           user.role==="instructor"?"ยินดีต้อนรับอาจารย์ผู้สอน":
-           "ยินดีต้อนรับสู่ระบบเรียนรู้ผ้าม่าน"}
-        </p>
-      </div>
-      <div className="grid-3" style={{marginBottom:32}}>
-        <div className="stat-card">
-          <div className="stat-icon" style={{background:"rgba(200,164,78,.12)",color:"var(--gold)"}}>📚</div>
-          <div><div className="stat-value">{lessons.length}</div><div className="stat-label">บทเรียนทั้งหมด</div></div>
-        </div>
-        {user.role==="student" ? (
-          <div className="stat-card">
-            <div className="stat-icon" style={{background:"rgba(45,138,78,.12)",color:"var(--success)"}}>✅</div>
-            <div><div className="stat-value">{completedCount}/{lessons.length}</div><div className="stat-label">บทที่ผ่านแล้ว</div></div>
-          </div>
-        ):(
-          <div className="stat-card">
-            <div className="stat-icon" style={{background:"rgba(41,128,185,.12)",color:"var(--info)"}}>👥</div>
-            <div><div className="stat-value">{users.filter(u=>u.role==="student").length}</div><div className="stat-label">ผู้เรียนทั้งหมด</div></div>
-          </div>
-        )}
-        <div className="stat-card">
-          <div className="stat-icon" style={{background:"rgba(142,68,173,.12)",color:"#8e44ad"}}>🎮</div>
-          <div><div className="stat-value">2</div><div className="stat-label">เกมเสริมทักษะ</div></div>
-        </div>
-      </div>
-      {user.role==="student" && (
-        <div className="card" style={{padding:24}}>
-          <h3 style={{marginBottom:16,color:"var(--navy)"}}>ความก้าวหน้าของคุณ</h3>
-          <div style={{background:"var(--cream-dark)",borderRadius:99,height:20,overflow:"hidden"}}>
-            <div style={{
-              width:`${(completedCount/lessons.length)*100}%`,height:"100%",
-              background:"linear-gradient(90deg,var(--gold),var(--gold-light))",
-              borderRadius:99,transition:"width .5s ease",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              color:"var(--navy)",fontSize:".7rem",fontWeight:700,
-              minWidth: completedCount > 0 ? 40 : 0,
-            }}>
-              {completedCount>0 && `${Math.round((completedCount/lessons.length)*100)}%`}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ──── Lessons List ──── */
-function LessonsList({lessons,progress,user,onSelectLesson}){
-  const isUnlocked=(idx)=>{
-    if(user.role!=="student") return true;
-    if(idx===0) return true;
-    return progress[lessons[idx-1].id]===true;
-  };
-  return(
-    <div className="container fade-in">
-      <div className="page-header">
-        <h1 className="page-title font-display">📚 บทเรียนทั้งหมด</h1>
-        <p className="page-sub">เรียนรู้ทีละบท ทำ Quiz ให้ได้ 10/10 เพื่อปลดล็อกบทถัดไป</p>
-      </div>
-      <div className="grid-3">
-        {lessons.map((l,i)=>{
-          const unlocked=isUnlocked(i);
-          const completed=progress[l.id]===true;
-          return(
-            <div key={l.id} className={`lesson-card ${!unlocked?"locked":""}`}
-              onClick={()=>unlocked && onSelectLesson(l,i)}>
-              {!unlocked && <div className="lock-overlay">🔒</div>}
-              <div className="lesson-cover" style={{background:l.color}}>
-                <span style={{position:"relative",zIndex:1,filter:!unlocked?"blur(2px)":"none"}}>{l.icon}</span>
-              </div>
-              <div className="lesson-body">
-                <div className="lesson-num">บทที่ {i+1}</div>
-                <div className="lesson-title">{l.title}</div>
-                <div className="lesson-desc">{l.description}</div>
-                <div className="lesson-footer">
-                  {completed ? <span className="badge badge-success">✓ ผ่านแล้ว</span>
-                    : unlocked ? <span className="badge badge-gold">พร้อมเรียน</span>
-                    : <span className="badge badge-danger">🔒 ยังไม่ปลดล็อก</span>}
-                  <span style={{fontSize:".78rem",color:"var(--text-light)"}}>Quiz 10 ข้อ</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ──── Lesson Content View ──── */
-function LessonView({lesson,lessonIndex,onBack,onStartQuiz}){
-  return(
-    <div className="container fade-in">
-      <button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
-      <div className="card" style={{padding:"32px 36px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-          <span style={{fontSize:"2.2rem"}}>{lesson.icon}</span>
-          <div>
-            <div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold-dim)",letterSpacing:2,textTransform:"uppercase"}}>บทที่ {lessonIndex+1}</div>
-            <h1 className="font-display" style={{fontSize:"1.5rem",color:"var(--navy)"}}>{lesson.title}</h1>
-          </div>
-        </div>
-        <div className="lesson-content" dangerouslySetInnerHTML={{__html:lesson.content}}/>
-        <div className="lesson-nav">
-          <a href={lesson.downloadUrl||"#"} className="btn btn-outline btn-sm" target="_blank" rel="noopener">
-            📥 ดาวน์โหลดเอกสาร
-          </a>
-          <button className="btn btn-gold" onClick={onStartQuiz}>
-            ทำแบบทดสอบ →
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ──── Quiz ──── */
-function QuizPage({lesson,lessonIndex,onBack,onPass,addToast}){
-  const [questions,setQuestions]=useState([]);
-  const [current,setCurrent]=useState(0);
-  const [selected,setSelected]=useState(null);
-  const [answered,setAnswered]=useState(false);
-  const [results,setResults]=useState([]);
-  const [done,setDone]=useState(false);
-
-  useEffect(()=>{
-    // pick 10 random from pool
-    const pool=[...lesson.quizPool];
-    const shuffled=pool.sort(()=>Math.random()-.5).slice(0,10);
-    // also shuffle options for each
-    const prepared=shuffled.map(q=>{
-      const optPairs=q.opts.map((o,i)=>({text:o,origIdx:i}));
-      optPairs.sort(()=>Math.random()-.5);
-      const newAns=optPairs.findIndex(p=>p.origIdx===q.ans);
-      return{q:q.q,opts:optPairs.map(p=>p.text),ans:newAns};
-    });
-    setQuestions(prepared);
-  },[lesson]);
-
-  if(!questions.length) return null;
-
-  const handleSelect=(idx)=>{
-    if(answered) return;
-    setSelected(idx);
-  };
-  const handleConfirm=()=>{
-    if(selected===null) return;
-    setAnswered(true);
-    const correct=selected===questions[current].ans;
-    setResults(p=>[...p,correct]);
-  };
-  const handleNext=()=>{
-    if(current<questions.length-1){
-      setCurrent(c=>c+1);
-      setSelected(null);
-      setAnswered(false);
-    } else {
-      setDone(true);
-    }
-  };
-  const handleRetry=()=>{
-    const pool=[...lesson.quizPool];
-    const shuffled=pool.sort(()=>Math.random()-.5).slice(0,10);
-    const prepared=shuffled.map(q=>{
-      const optPairs=q.opts.map((o,i)=>({text:o,origIdx:i}));
-      optPairs.sort(()=>Math.random()-.5);
-      const newAns=optPairs.findIndex(p=>p.origIdx===q.ans);
-      return{q:q.q,opts:optPairs.map(p=>p.text),ans:newAns};
-    });
-    setQuestions(prepared);
-    setCurrent(0);setSelected(null);setAnswered(false);setResults([]);setDone(false);
-  };
-
-  const score=results.filter(Boolean).length;
-  const perfect=score===10;
-
-  if(done){
-    return(
-      <div className="container fade-in">
-        <div className="card" style={{padding:40}}>
-          <div className="quiz-result">
-            {perfect && <Confetti/>}
-            <div style={{fontSize:"4rem",marginBottom:16}}>{perfect?"🎉":"😢"}</div>
-            <div className={`quiz-score ${perfect?"perfect":"fail"}`}>{score}/10</div>
-            <p style={{fontSize:"1.2rem",margin:"16px 0",color:perfect?"var(--success)":"var(--danger)"}}>
-              {perfect?"ยอดเยี่ยม! คุณผ่านบทนี้แล้ว!":"ต้องได้ 10/10 ถึงจะผ่าน ลองอีกครั้งนะ!"}
-            </p>
-            <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-              {perfect ? (
-                <button className="btn btn-gold btn-lg" onClick={()=>{onPass(lesson.id);addToast("ปลดล็อกบทถัดไปแล้ว! 🎉")}}>
-                  ดำเนินการต่อ →
-                </button>
-              ):(
-                <button className="btn btn-primary btn-lg" onClick={handleRetry}>
-                  ลองอีกครั้ง ↺
-                </button>
-              )}
-              <button className="btn btn-outline" onClick={onBack}>กลับหน้าบทเรียน</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const q=questions[current];
-  return(
-    <div className="container fade-in">
-      <button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
-      <div className="card" style={{padding:"32px 36px"}}>
-        <div className="quiz-container">
-          <div className="quiz-header">
-            <h2 className="font-display" style={{color:"var(--navy)"}}>
-              แบบทดสอบ: {lesson.title}
-            </h2>
-            <div className="quiz-progress">
-              {questions.map((_,i)=>(
-                <div key={i} className={`quiz-dot ${
-                  i===current?"current":
-                  i<results.length?(results[i]?"correct":"wrong"):"pending"
-                }`}>{i+1}</div>
-              ))}
-            </div>
-          </div>
-          <div style={{marginBottom:8,fontSize:".82rem",color:"var(--text-light)"}}>
-            ข้อที่ {current+1} จาก {questions.length}
-          </div>
-          <div className="quiz-question">{q.q}</div>
-          {q.opts.map((o,i)=>{
-            let cls="quiz-option";
-            if(answered){
-              if(i===q.ans) cls+=" correct-answer";
-              else if(i===selected) cls+=" wrong-answer";
-            } else if(i===selected) cls+=" selected";
-            return <button key={i} className={cls} onClick={()=>handleSelect(i)}>{o}</button>;
-          })}
-          <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:16}}>
-            {!answered ? (
-              <button className="btn btn-primary" disabled={selected===null} onClick={handleConfirm}>ยืนยันคำตอบ</button>
-            ):(
-              <button className="btn btn-gold" onClick={handleNext}>
-                {current<questions.length-1?"ข้อถัดไป →":"ดูผลลัพธ์"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Confetti(){
-  const colors=["#c8a44e","#e8c96a","#2d8a4e","#2980b9","#e74c3c","#8e44ad"];
+  const c=["#c8a44e","#e8c96a","#2d8a4e","#2980b9","#e74c3c","#8e44ad"];
   return <div>{Array.from({length:30}).map((_,i)=>(
-    <div key={i} className="confetti-piece" style={{
-      left:`${Math.random()*100}vw`,top:`${-Math.random()*20}vh`,
-      background:colors[i%colors.length],
-      animationDelay:`${Math.random()*1}s`,
-      borderRadius:Math.random()>.5?"50%":"2px",
-      width:Math.random()*8+6,height:Math.random()*8+6,
-    }}/>
+    <div key={i} className="confetti-piece" style={{left:`${Math.random()*100}vw`,top:`${-Math.random()*20}vh`,background:c[i%c.length],animationDelay:`${Math.random()}s`,borderRadius:Math.random()>.5?"50%":"2px",width:Math.random()*8+6,height:Math.random()*8+6}}/>
   ))}</div>;
 }
 
-/* ──── Calculator ──── */
-function Calculator(){
-  const [trackW,setTrackW]=useState(300);
-  const [height,setHeight]=useState(260);
-  const [pleatType,setPleatType]=useState("2.5");
-  const [fabricW,setFabricW]=useState(140);
-  const [pricePerM,setPricePerM]=useState(450);
-  const [sewingCost,setSewingCost]=useState(300);
-  const [trackCost,setTrackCost]=useState(250);
-  const [installCost,setInstallCost]=useState(800);
-  const [hemAllowance,setHemAllowance]=useState(25);
-
-  const totalFabricWidth = trackW * parseFloat(pleatType);
-  const panels = Math.ceil(totalFabricWidth / fabricW);
-  const lengthPerPanel = height + hemAllowance;
-  const totalFabric = (panels * lengthPerPanel / 100).toFixed(1);
-  const fabricCost = (totalFabric * pricePerM).toFixed(0);
-  const totalSewing = (panels * sewingCost).toFixed(0);
-  const totalTrack = ((trackW/100) * trackCost).toFixed(0);
-  const grandTotal = (parseFloat(fabricCost) + parseFloat(totalSewing) + parseFloat(totalTrack) + installCost).toFixed(0);
-
-  return(
-    <div className="container fade-in">
-      <div className="page-header">
-        <h1 className="page-title font-display">🧮 เครื่องคำนวณผ้าม่าน</h1>
-        <p className="page-sub">คำนวณปริมาณผ้าและราคาประมาณสำหรับงานม่าน</p>
-      </div>
-      <div className="card" style={{padding:32}}>
-        <div className="calc-wrap">
-          <div className="calc-grid">
-            <div className="form-group">
-              <label className="label">ความกว้างราง (ซม.)</label>
-              <input className="input" type="number" value={trackW} onChange={e=>setTrackW(+e.target.value)}/>
-            </div>
-            <div className="form-group">
-              <label className="label">ความสูงม่าน (ซม.)</label>
-              <input className="input" type="number" value={height} onChange={e=>setHeight(+e.target.value)}/>
-            </div>
-            <div className="form-group">
-              <label className="label">อัตราจีบ (เท่า)</label>
-              <select className="input" value={pleatType} onChange={e=>setPleatType(e.target.value)}>
-                <option value="1.5">1.5× (ตาไก่)</option>
-                <option value="2">2× (จีบดินสอ)</option>
-                <option value="2.5">2.5× (จีบ 2 นิ้ว)</option>
-                <option value="3">3× (จีบ 3 นิ้ว)</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="label">หน้ากว้างผ้า (ซม.)</label>
-              <select className="input" value={fabricW} onChange={e=>setFabricW(+e.target.value)}>
-                <option value="140">140 ซม.</option>
-                <option value="280">280 ซม.</option>
-                <option value="300">300 ซม.</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="label">ราคาผ้า (บาท/เมตร)</label>
-              <input className="input" type="number" value={pricePerM} onChange={e=>setPricePerM(+e.target.value)}/>
-            </div>
-            <div className="form-group">
-              <label className="label">ค่าเย็บ (บาท/หน้า)</label>
-              <input className="input" type="number" value={sewingCost} onChange={e=>setSewingCost(+e.target.value)}/>
-            </div>
-            <div className="form-group">
-              <label className="label">ค่าราง (บาท/เมตร)</label>
-              <input className="input" type="number" value={trackCost} onChange={e=>setTrackCost(+e.target.value)}/>
-            </div>
-            <div className="form-group">
-              <label className="label">ค่าติดตั้ง (บาท)</label>
-              <input className="input" type="number" value={installCost} onChange={e=>setInstallCost(+e.target.value)}/>
-            </div>
-          </div>
-          <div className="calc-result">
-            <h3 style={{color:"var(--gold)",marginBottom:16,fontFamily:"'Playfair Display',serif"}}>ผลการคำนวณ</h3>
-            <div className="calc-result-row"><span>ความกว้างผ้ารวม</span><span>{totalFabricWidth.toFixed(0)} ซม.</span></div>
-            <div className="calc-result-row"><span>จำนวนหน้าผ้า</span><span>{panels} หน้า</span></div>
-            <div className="calc-result-row"><span>ความยาวต่อหน้า</span><span>{lengthPerPanel} ซม.</span></div>
-            <div className="calc-result-row"><span>ปริมาณผ้ารวม</span><span>{totalFabric} เมตร</span></div>
-            <div style={{borderTop:"1px solid rgba(255,255,255,.2)",margin:"8px 0"}}/>
-            <div className="calc-result-row"><span>ค่าผ้า</span><span>฿{parseInt(fabricCost).toLocaleString()}</span></div>
-            <div className="calc-result-row"><span>ค่าตัดเย็บ</span><span>฿{parseInt(totalSewing).toLocaleString()}</span></div>
-            <div className="calc-result-row"><span>ค่าราง</span><span>฿{parseInt(totalTrack).toLocaleString()}</span></div>
-            <div className="calc-result-row"><span>ค่าติดตั้ง</span><span>฿{installCost.toLocaleString()}</span></div>
-            <div className="calc-result-row"><span style={{color:"var(--gold)"}}>💰 รวมทั้งหมด</span><span style={{color:"var(--gold)",fontSize:"1.3rem"}}>฿{parseInt(grandTotal).toLocaleString()}</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+/* ══════ FIREBASE HELPERS ══════ */
+async function fbUploadImage(file){
+  if(!useFirebase||!storage) return null;
+  const ref=storage.ref(`lesson-images/${Date.now()}_${file.name}`);
+  const snap=await ref.put(file);
+  return await snap.ref.getDownloadURL();
+}
+async function fbSaveLessons(lessons){
+  if(!useFirebase||!db)return;
+  const batch=db.batch();
+  lessons.forEach(l=>{
+    batch.set(db.collection("lessons").doc(l.id),l);
+  });
+  await batch.commit();
+}
+async function fbLoadLessons(){
+  if(!useFirebase||!db)return null;
+  const snap=await db.collection("lessons").orderBy("id").get();
+  if(snap.empty)return null;
+  return snap.docs.map(d=>d.data());
+}
+function fbListenLessons(callback){
+  if(!useFirebase||!db)return ()=>{};
+  return db.collection("lessons").orderBy("id").onSnapshot(snap=>{
+    const data=snap.docs.map(d=>d.data());
+    if(data.length)callback(data);
+  });
 }
 
-/* ──── Memory Game ──── */
-function GamePage(){
-  const [gameMode,setGameMode]=useState(null);
-  if(!gameMode) return(
-    <div className="container fade-in">
-      <div className="page-header">
-        <h1 className="page-title font-display">🎮 เกมเสริมทักษะ</h1>
-        <p className="page-sub">เล่นเกมสนุกๆ เพื่อทบทวนความรู้เรื่องผ้าม่าน</p>
-      </div>
-      <div className="grid-2">
-        <div className="card" style={{padding:32,textAlign:"center",cursor:"pointer"}} onClick={()=>setGameMode("match")}>
-          <div style={{fontSize:"3.5rem",marginBottom:16}}>🃏</div>
-          <h3 style={{color:"var(--navy)",marginBottom:8}}>เกมจับคู่</h3>
-          <p style={{fontSize:".88rem",color:"var(--text-light)"}}>จับคู่ชื่อผ้าม่านภาษาไทยกับภาษาอังกฤษ</p>
-          <button className="btn btn-gold" style={{marginTop:16}}>เล่นเลย</button>
-        </div>
-        <div className="card" style={{padding:32,textAlign:"center",cursor:"pointer"}} onClick={()=>setGameMode("speed")}>
-          <div style={{fontSize:"3.5rem",marginBottom:16}}>⚡</div>
-          <h3 style={{color:"var(--navy)",marginBottom:8}}>คำนวณแข่งเวลา</h3>
-          <p style={{fontSize:".88rem",color:"var(--text-light)"}}>ตอบโจทย์คำนวณผ้าม่านให้เร็วที่สุด</p>
-          <button className="btn btn-gold" style={{marginTop:16}}>เล่นเลย</button>
-        </div>
-      </div>
-    </div>
-  );
-  if(gameMode==="match") return <MatchGame onBack={()=>setGameMode(null)}/>;
-  if(gameMode==="speed") return <SpeedCalcGame onBack={()=>setGameMode(null)}/>;
-}
-
-function MatchGame({onBack}){
-  const [cards,setCards]=useState([]);
-  const [flipped,setFlipped]=useState([]);
-  const [matched,setMatched]=useState([]);
-  const [moves,setMoves]=useState(0);
-  const [gameWon,setGameWon]=useState(false);
-  const lockRef=useRef(false);
+/* ══════ RICH TEXT EDITOR ══════ */
+function RichEditor({initialHtml,onSave,onCancel,lessonTitle,addToast}){
+  const editorRef=useRef(null);
+  const fileRef=useRef(null);
+  const [uploading,setUploading]=useState(false);
+  const [uploadProgress,setUploadProgress]=useState(0);
+  const [images,setImages]=useState([]);
 
   useEffect(()=>{
-    const pairs=GAME_PAIRS.slice(0,6);
-    const deck=[];
-    pairs.forEach(p=>{
-      deck.push({uid:p.id+"a",pairId:p.id,text:p.text,type:"th"});
-      deck.push({uid:p.id+"b",pairId:p.id,text:p.match,type:"en"});
-    });
-    deck.sort(()=>Math.random()-.5);
-    setCards(deck);
+    if(editorRef.current){
+      editorRef.current.innerHTML=initialHtml||"";
+    }
   },[]);
 
-  const handleFlip=(idx)=>{
-    if(lockRef.current) return;
-    if(flipped.includes(idx)||matched.includes(cards[idx].pairId)) return;
-    const newFlipped=[...flipped,idx];
-    setFlipped(newFlipped);
-    if(newFlipped.length===2){
-      setMoves(m=>m+1);
-      lockRef.current=true;
-      const [a,b]=newFlipped;
-      if(cards[a].pairId===cards[b].pairId){
-        setTimeout(()=>{
-          const newMatched=[...matched,cards[a].pairId];
-          setMatched(newMatched);
-          setFlipped([]);
-          lockRef.current=false;
-          if(newMatched.length===6) setGameWon(true);
-        },600);
+  const exec=(cmd,val)=>{
+    document.execCommand(cmd,false,val||null);
+    editorRef.current?.focus();
+  };
+
+  const handleImageUpload=async(files)=>{
+    for(const file of files){
+      if(!file.type.startsWith("image/")){addToast("รองรับเฉพาะไฟล์รูปภาพ","error");continue;}
+      if(file.size>5*1024*1024){addToast("ไฟล์ต้องไม่เกิน 5MB","error");continue;}
+      
+      setUploading(true);setUploadProgress(10);
+      
+      // If Firebase connected, upload to Storage
+      if(useFirebase&&storage){
+        try{
+          const ref=storage.ref(`lesson-images/${Date.now()}_${file.name}`);
+          const task=ref.put(file);
+          task.on("state_changed",(snap)=>{
+            setUploadProgress(Math.round((snap.bytesTransferred/snap.totalBytes)*100));
+          });
+          await task;
+          const url=await ref.getDownloadURL();
+          insertImageToEditor(url,file.name);
+          setImages(p=>[...p,{name:file.name,url}]);
+          addToast("อัปโหลดรูปสำเร็จ!");
+        }catch(e){
+          addToast("อัปโหลดล้มเหลว: "+e.message,"error");
+        }
       } else {
-        setTimeout(()=>{setFlipped([]);lockRef.current=false;},1000);
+        // Offline: convert to base64
+        const reader=new FileReader();
+        reader.onload=(e)=>{
+          setUploadProgress(100);
+          insertImageToEditor(e.target.result,file.name);
+          setImages(p=>[...p,{name:file.name,url:e.target.result}]);
+          addToast("เพิ่มรูปสำเร็จ (โหมดออฟไลน์)");
+        };
+        reader.onprogress=(e)=>{if(e.lengthComputable)setUploadProgress(Math.round((e.loaded/e.total)*100))};
+        reader.readAsDataURL(file);
+      }
+      setUploading(false);setUploadProgress(0);
+    }
+  };
+
+  const insertImageToEditor=(src,alt)=>{
+    const img=`<img src="${src}" alt="${alt||'รูปภาพ'}" style="max-width:100%;border-radius:8px;margin:10px 0;"/>`;
+    editorRef.current?.focus();
+    document.execCommand("insertHTML",false,img);
+  };
+
+  const insertImageUrl=()=>{
+    const url=prompt("วาง URL รูปภาพ:");
+    if(url){insertImageToEditor(url,"รูปภาพ");addToast("เพิ่มรูปจาก URL สำเร็จ");}
+  };
+
+  const handleDrop=(e)=>{
+    e.preventDefault();
+    e.currentTarget.classList.remove("dragging");
+    const files=e.dataTransfer?.files;
+    if(files?.length)handleImageUpload(Array.from(files));
+  };
+
+  const handlePaste=(e)=>{
+    const items=e.clipboardData?.items;
+    if(!items)return;
+    for(const item of items){
+      if(item.type.startsWith("image/")){
+        e.preventDefault();
+        handleImageUpload([item.getAsFile()]);
+        return;
       }
     }
   };
 
+  const insertHighlightBox=()=>{
+    exec("insertHTML",'<div style="padding:16px 20px;border-radius:8px;margin:14px 0;background:linear-gradient(135deg,rgba(200,164,78,.08),rgba(200,164,78,.03));border-left:4px solid #c8a44e;">💡 <strong>เคล็ดลับ:</strong> พิมพ์ข้อความที่นี่</div><p></p>');
+  };
+  const insertInfoBox=()=>{
+    exec("insertHTML",'<div style="padding:16px 20px;border-radius:8px;margin:14px 0;background:rgba(41,128,185,.06);border-left:4px solid #2980b9;">📌 <strong>หมายเหตุ:</strong> พิมพ์ข้อความที่นี่</div><p></p>');
+  };
+  const insertTable=()=>{
+    exec("insertHTML",'<table><thead><tr><th>หัวข้อ 1</th><th>หัวข้อ 2</th><th>หัวข้อ 3</th></tr></thead><tbody><tr><td>ข้อมูล</td><td>ข้อมูล</td><td>ข้อมูล</td></tr><tr><td>ข้อมูล</td><td>ข้อมูล</td><td>ข้อมูล</td></tr></tbody></table><p></p>');
+  };
+
+  const handleSave=()=>{
+    const html=editorRef.current?.innerHTML||"";
+    onSave(html);
+  };
+
   return(
-    <div className="container fade-in">
-      <button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
-      <div className="card" style={{padding:32}}>
-        <div style={{textAlign:"center",marginBottom:20}}>
-          <h2 className="font-display" style={{color:"var(--navy)"}}>🃏 เกมจับคู่ผ้าม่าน</h2>
-          <p style={{color:"var(--text-light)",fontSize:".88rem"}}>จับคู่ชื่อไทย-อังกฤษ | จำนวนครั้งที่เปิด: {moves}</p>
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+        <h2 className="font-display" style={{color:"var(--navy)",fontSize:"1.3rem"}}>✏️ แก้ไขเนื้อหา: {lessonTitle}</h2>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn btn-outline btn-sm" onClick={onCancel}>ยกเลิก</button>
+          <button className="btn btn-gold" onClick={handleSave}>💾 บันทึกเนื้อหา</button>
         </div>
-        {gameWon && <Confetti/>}
-        {gameWon ? (
-          <div style={{textAlign:"center",padding:40}}>
-            <div style={{fontSize:"4rem",marginBottom:16}}>🎉</div>
-            <h3 style={{color:"var(--gold)",fontSize:"1.6rem",fontFamily:"'Playfair Display',serif"}}>ยินดีด้วย!</h3>
-            <p style={{margin:"12px 0",color:"var(--text-light)"}}>คุณจับคู่ครบแล้วใน {moves} ครั้ง</p>
-            <button className="btn btn-gold" onClick={()=>{
-              setGameWon(false);setMoves(0);setMatched([]);setFlipped([]);
-              const pairs=GAME_PAIRS.slice(0,6);const deck=[];
-              pairs.forEach(p=>{deck.push({uid:p.id+"a",pairId:p.id,text:p.text,type:"th"});deck.push({uid:p.id+"b",pairId:p.id,text:p.match,type:"en"});});
-              deck.sort(()=>Math.random()-.5);setCards(deck);
-            }}>เล่นอีกครั้ง</button>
-          </div>
-        ):(
-          <div className="game-board" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
-            {cards.map((c,i)=>{
-              const isFlipped=flipped.includes(i);
-              const isMatched=matched.includes(c.pairId);
-              return(
-                <div key={c.uid} className={`game-card-cell ${isFlipped?"flipped":""} ${isMatched?"matched":""}`}
-                  onClick={()=>handleFlip(i)}>
-                  <div className="game-card-inner">
-                    <div className="game-card-front">🪟</div>
-                    <div className="game-card-back">
-                      <span style={{fontSize:c.type==="th"?".85rem":".75rem"}}>{c.text}</span>
-                      <span style={{fontSize:".6rem",color:"var(--text-light)"}}>{c.type==="th"?"🇹🇭":"🇬🇧"}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {/* Toolbar */}
+      <div className="editor-toolbar">
+        <button onClick={()=>exec("bold")} title="ตัวหนา"><b>B</b></button>
+        <button onClick={()=>exec("italic")} title="ตัวเอียง"><i>I</i></button>
+        <button onClick={()=>exec("underline")} title="ขีดเส้นใต้"><u>U</u></button>
+        <button onClick={()=>exec("strikeThrough")} title="ขีดทับ"><s>S</s></button>
+        <div className="sep"/>
+        <button onClick={()=>exec("formatBlock","h2")} title="หัวข้อใหญ่">H2</button>
+        <button onClick={()=>exec("formatBlock","h3")} title="หัวข้อรอง">H3</button>
+        <button onClick={()=>exec("formatBlock","p")} title="ย่อหน้า">¶</button>
+        <div className="sep"/>
+        <button onClick={()=>exec("insertUnorderedList")} title="รายการจุด">• List</button>
+        <button onClick={()=>exec("insertOrderedList")} title="รายการเลข">1. List</button>
+        <button onClick={()=>exec("formatBlock","blockquote")} title="Quote">❝ Quote</button>
+        <div className="sep"/>
+        <button onClick={()=>exec("justifyLeft")} title="ชิดซ้าย">⫷</button>
+        <button onClick={()=>exec("justifyCenter")} title="กึ่งกลาง">⫿</button>
+        <button onClick={()=>exec("justifyRight")} title="ชิดขวา">⫸</button>
+        <div className="sep"/>
+        <button onClick={insertHighlightBox} title="กล่องเคล็ดลับ" style={{background:"rgba(200,164,78,.15)"}}>💡 Tip</button>
+        <button onClick={insertInfoBox} title="กล่องข้อมูล" style={{background:"rgba(41,128,185,.1)"}}>📌 Info</button>
+        <button onClick={insertTable} title="ตาราง">📊 Table</button>
+        <div className="sep"/>
+        <button onClick={()=>fileRef.current?.click()} title="อัปโหลดรูป" style={{background:"rgba(45,138,78,.1)",color:"var(--success)"}}>📷 รูปภาพ</button>
+        <button onClick={insertImageUrl} title="แทรกรูปจาก URL">🔗 URL รูป</button>
+        <div className="sep"/>
+        <button onClick={()=>exec("removeFormat")} title="ลบ Format">🧹</button>
+        <button onClick={()=>{if(confirm("ลบเนื้อหาทั้งหมด?")){editorRef.current.innerHTML="";addToast("ล้างเนื้อหาแล้ว","info")}}} title="ล้างทั้งหมด" style={{color:"var(--danger)"}}>🗑️</button>
+      </div>
+
+      {/* Hidden file input */}
+      <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e=>handleImageUpload(Array.from(e.target.files||[]))}/>
+
+      {/* Upload progress */}
+      {uploading && (
+        <div style={{padding:"8px 12px",background:"var(--cream)",display:"flex",alignItems:"center",gap:10}}>
+          <span className="spinner"/><span style={{fontSize:".85rem"}}>กำลังอัปโหลด...</span>
+          <div className="upload-progress" style={{flex:1}}><div className="upload-progress-bar" style={{width:`${uploadProgress}%`}}/></div>
+          <span style={{fontSize:".8rem",fontWeight:600}}>{uploadProgress}%</span>
+        </div>
+      )}
+
+      {/* Editor area */}
+      <div ref={editorRef} className="editor-area" contentEditable="true" suppressContentEditableWarning
+        onDrop={handleDrop}
+        onDragOver={e=>{e.preventDefault();e.currentTarget.classList.add("dragging")}}
+        onDragLeave={e=>e.currentTarget.classList.remove("dragging")}
+        onPaste={handlePaste}
+      />
+
+      {/* Image upload zone */}
+      <div className="img-upload-zone"
+        onClick={()=>fileRef.current?.click()}
+        onDrop={handleDrop}
+        onDragOver={e=>{e.preventDefault();e.currentTarget.classList.add("dragging")}}
+        onDragLeave={e=>e.currentTarget.classList.remove("dragging")}
+      >
+        <div style={{fontSize:"2rem",marginBottom:8}}>📷</div>
+        <p style={{fontWeight:600,color:"var(--navy)"}}>คลิกหรือลากรูปภาพมาวางที่นี่</p>
+        <p style={{fontSize:".82rem",color:"var(--text-light)"}}>รองรับ JPG, PNG, GIF, WebP (ไม่เกิน 5MB) • วาง (Paste) รูปในพื้นที่แก้ไขได้เลย</p>
+        {useFirebase && <p style={{fontSize:".75rem",color:"var(--success)",marginTop:4}}>✓ เชื่อมต่อ Firebase Storage แล้ว — รูปจะถูกอัปโหลดขึ้น Cloud</p>}
+        {!useFirebase && <p style={{fontSize:".75rem",color:"var(--gold-dim)",marginTop:4}}>⚠ โหมดออฟไลน์ — รูปจะถูกฝังเป็น Base64 ในเนื้อหา</p>}
+      </div>
+
+      {/* Uploaded images gallery */}
+      {images.length>0 && (
+        <div style={{marginTop:12}}>
+          <p className="label">รูปที่อัปโหลดแล้ว (คลิกเพื่อแทรกอีกครั้ง)</p>
+          <div className="img-preview-grid">
+            {images.map((img,i)=>(
+              <div key={i} className="img-preview-item" onClick={()=>insertImageToEditor(img.url,img.name)} style={{cursor:"pointer"}}>
+                <img src={img.url} alt={img.name}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SpeedCalcGame({onBack}){
-  const [qIdx,setQIdx]=useState(0);
-  const [answer,setAnswer]=useState("");
-  const [score,setScore]=useState(0);
-  const [timeLeft,setTimeLeft]=useState(60);
-  const [gameOver,setGameOver]=useState(false);
-  const [feedback,setFeedback]=useState(null);
-  const timerRef=useRef();
+/* ══════ LESSON MANAGEMENT (Admin/Instructor) ══════ */
+function LessonManagement({lessons,setLessons,addToast,user}){
+  const [editingLesson,setEditingLesson]=useState(null);
+  const [editMode,setEditMode]=useState(null); // "content"|"meta"|null
+  const [metaForm,setMetaForm]=useState({});
 
-  const questions=[
-    {q:"ราง 2 เมตร, จีบ ×2.5 → ความกว้างผ้ารวม (ซม.)?",a:500},
-    {q:"ราง 3 เมตร, จีบ ×2 → ความกว้างผ้ารวม (ซม.)?",a:600},
-    {q:"ความกว้าง 700 ซม. ÷ ผ้า 140 ซม. = กี่หน้า?",a:5},
-    {q:"ความกว้าง 500 ซม. ÷ ผ้า 140 ซม. = กี่หน้า? (ปัดขึ้น)",a:4},
-    {q:"สูง 260 ซม. + ค่าพับ 25 ซม. = ความยาวต่อหน้า?",a:285},
-    {q:"6 หน้า × 285 ซม. ÷ 100 = ผ้ากี่เมตร? (ปัดทศนิยม 1 ตำแหน่ง × 10)",a:171},
-    {q:"ผ้า 17 เมตร × 450 บาท = กี่บาท?",a:7650},
-    {q:"วงกบกว้าง 150 ซม. เผื่อข้างละ 20 ซม. → ความกว้างราง?",a:190},
-    {q:"ราง 4 เมตร, จีบ ×1.5 → ความกว้างผ้ารวม (ซม.)?",a:600},
-    {q:"5 หน้า × ค่าเย็บ 300 บาท = เท่าไหร่?",a:1500},
-  ];
+  const canEdit=user.role==="admin"||user.role==="instructor";
+  if(!canEdit) return null;
 
-  useEffect(()=>{
-    timerRef.current=setInterval(()=>{
-      setTimeLeft(t=>{
-        if(t<=1){clearInterval(timerRef.current);setGameOver(true);return 0;}
-        return t-1;
-      });
-    },1000);
-    return()=>clearInterval(timerRef.current);
-  },[]);
-
-  const handleSubmit=(e)=>{
-    e.preventDefault();
-    if(gameOver) return;
-    const ans=parseInt(answer);
-    const correct=ans===questions[qIdx].a;
-    if(correct){
-      setScore(s=>s+1);
-      setFeedback("correct");
+  const handleSaveContent=async(lessonId,html)=>{
+    const updated=lessons.map(l=>l.id===lessonId?{...l,content:html}:l);
+    setLessons(updated);
+    if(useFirebase){
+      try{
+        await db.collection("lessons").doc(lessonId).update({content:html});
+        addToast("บันทึกเนื้อหาลง Firebase สำเร็จ! 🔥");
+      }catch(e){addToast("บันทึกลง Firebase ล้มเหลว: "+e.message,"error")}
     } else {
-      setFeedback("wrong");
+      addToast("บันทึกเนื้อหาสำเร็จ (ออฟไลน์)");
     }
-    setTimeout(()=>{
-      setFeedback(null);
-      setAnswer("");
-      if(qIdx<questions.length-1) setQIdx(i=>i+1);
-      else {clearInterval(timerRef.current);setGameOver(true);}
-    },800);
+    setEditingLesson(null);setEditMode(null);
   };
 
-  if(gameOver){
+  const handleSaveMeta=async()=>{
+    const updated=lessons.map(l=>l.id===metaForm.id?{...l,...metaForm}:l);
+    setLessons(updated);
+    if(useFirebase){
+      try{
+        await db.collection("lessons").doc(metaForm.id).update({title:metaForm.title,description:metaForm.description,icon:metaForm.icon,downloadUrl:metaForm.downloadUrl});
+        addToast("บันทึกข้อมูลบทเรียนสำเร็จ! 🔥");
+      }catch(e){addToast("บันทึกลง Firebase ล้มเหลว","error")}
+    } else {
+      addToast("บันทึกข้อมูลบทเรียนสำเร็จ (ออฟไลน์)");
+    }
+    setEditMode(null);
+  };
+
+  const addNewLesson=async()=>{
+    const newId="L"+(lessons.length+1);
+    const newLesson={id:newId,title:"บทเรียนใหม่",icon:"📖",color:LESSON_COLORS[lessons.length%5],
+      description:"คำอธิบายบทเรียน...",content:"<h2>บทเรียนใหม่</h2><p>เพิ่มเนื้อหาที่นี่...</p>",
+      downloadUrl:"#",quizPool:[]};
+    const updated=[...lessons,newLesson];
+    setLessons(updated);
+    if(useFirebase){
+      try{await db.collection("lessons").doc(newId).set(newLesson);addToast("สร้างบทเรียนใหม่สำเร็จ! 🔥")}
+      catch(e){addToast("สร้างลง Firebase ล้มเหลว","error")}
+    } else addToast("สร้างบทเรียนใหม่สำเร็จ (ออฟไลน์)");
+  };
+
+  const deleteLesson=async(id)=>{
+    if(!confirm("ต้องการลบบทเรียนนี้?"))return;
+    const updated=lessons.filter(l=>l.id!==id);
+    setLessons(updated);
+    if(useFirebase){
+      try{await db.collection("lessons").doc(id).delete();addToast("ลบบทเรียนสำเร็จ","info")}
+      catch(e){addToast("ลบจาก Firebase ล้มเหลว","error")}
+    } else addToast("ลบบทเรียนสำเร็จ (ออฟไลน์)","info");
+  };
+
+  // Content editor full-screen
+  if(editMode==="content"&&editingLesson){
     return(
       <div className="container fade-in">
-        <button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
-        <div className="card" style={{padding:40,textAlign:"center"}}>
-          <div style={{fontSize:"4rem",marginBottom:16}}>⏱️</div>
-          <h2 className="font-display" style={{color:"var(--navy)"}}>หมดเวลา!</h2>
-          <div style={{fontSize:"3rem",fontWeight:800,color:"var(--gold)",margin:"16px 0"}}>{score}/{questions.length}</div>
-          <p style={{color:"var(--text-light)"}}>คุณตอบถูก {score} ข้อ จาก {questions.length} ข้อ</p>
-          <button className="btn btn-gold" style={{marginTop:20}} onClick={()=>{
-            setQIdx(0);setScore(0);setTimeLeft(60);setGameOver(false);setAnswer("");
-            timerRef.current=setInterval(()=>{setTimeLeft(t=>{if(t<=1){clearInterval(timerRef.current);setGameOver(true);return 0;}return t-1;});},1000);
-          }}>เล่นอีกครั้ง</button>
+        <RichEditor
+          initialHtml={editingLesson.content}
+          lessonTitle={editingLesson.title}
+          onSave={(html)=>handleSaveContent(editingLesson.id,html)}
+          onCancel={()=>{setEditMode(null);setEditingLesson(null)}}
+          addToast={addToast}
+        />
+      </div>
+    );
+  }
+
+  // Meta editor modal
+  if(editMode==="meta"){
+    return(
+      <div className="container fade-in">
+        <button className="btn btn-outline btn-sm" onClick={()=>setEditMode(null)} style={{marginBottom:20}}>← กลับ</button>
+        <div className="card" style={{padding:32,maxWidth:600}}>
+          <h3 style={{color:"var(--navy)",marginBottom:20}}>แก้ไขข้อมูลบทเรียน</h3>
+          <div className="form-group"><label className="label">ชื่อบทเรียน</label><input className="input" value={metaForm.title||""} onChange={e=>setMetaForm(p=>({...p,title:e.target.value}))}/></div>
+          <div className="form-group"><label className="label">ไอคอน (Emoji)</label><input className="input" value={metaForm.icon||""} onChange={e=>setMetaForm(p=>({...p,icon:e.target.value}))}/></div>
+          <div className="form-group"><label className="label">คำอธิบาย</label><textarea className="input" value={metaForm.description||""} onChange={e=>setMetaForm(p=>({...p,description:e.target.value}))}/></div>
+          <div className="form-group"><label className="label">ลิงก์ดาวน์โหลด (Google Drive URL)</label><input className="input" value={metaForm.downloadUrl||""} onChange={e=>setMetaForm(p=>({...p,downloadUrl:e.target.value}))} placeholder="https://drive.google.com/..."/></div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="btn btn-outline" onClick={()=>setEditMode(null)}>ยกเลิก</button>
+            <button className="btn btn-gold" onClick={handleSaveMeta}>💾 บันทึก</button>
+          </div>
         </div>
       </div>
     );
@@ -1370,282 +724,362 @@ function SpeedCalcGame({onBack}){
 
   return(
     <div className="container fade-in">
-      <button className="btn btn-outline btn-sm" onClick={()=>{clearInterval(timerRef.current);onBack()}} style={{marginBottom:20}}>← กลับ</button>
-      <div className="card" style={{padding:32}}>
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <h2 className="font-display" style={{color:"var(--navy)"}}>⚡ คำนวณแข่งเวลา</h2>
-          <div className="game-timer" style={{color:timeLeft<=10?"var(--danger)":"var(--navy)",marginTop:8}}>
-            ⏱️ {timeLeft} วินาที
-          </div>
-          <p style={{color:"var(--text-light)",fontSize:".85rem",marginTop:4}}>คะแนน: {score} | ข้อ {qIdx+1}/{questions.length}</p>
-        </div>
-        <div style={{maxWidth:500,margin:"0 auto"}}>
-          <div className="quiz-question" style={{
-            background:feedback==="correct"?"rgba(45,138,78,.1)":feedback==="wrong"?"rgba(192,57,43,.1)":"transparent",
-            padding:16,borderRadius:"var(--radius-sm)",transition:"background .3s"
-          }}>
-            {questions[qIdx].q}
-          </div>
-          <form onSubmit={handleSubmit} style={{display:"flex",gap:10,marginTop:16}}>
-            <input className="input" type="number" placeholder="พิมพ์คำตอบ..." value={answer}
-              onChange={e=>setAnswer(e.target.value)} autoFocus style={{fontSize:"1.1rem",flex:1}}/>
-            <button type="submit" className="btn btn-gold">ตอบ</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ──── Admin: User Management ──── */
-function UserManagement({users,setUsers,addToast}){
-  const [modal,setModal]=useState(null);
-  const [form,setForm]=useState({name:"",email:"",role:"student",password:"1234"});
-
-  const openAdd=()=>{setForm({name:"",email:"",role:"student",password:"1234"});setModal("add")};
-  const openEdit=(u)=>{setForm({...u});setModal("edit")};
-  const handleSave=()=>{
-    if(!form.name||!form.email){addToast("กรุณากรอกข้อมูลให้ครบ","error");return;}
-    if(modal==="add"){
-      const newUser={...form,id:"u"+Date.now()};
-      setUsers(p=>[...p,newUser]);
-      addToast("เพิ่มผู้ใช้สำเร็จ");
-    } else {
-      setUsers(p=>p.map(u=>u.id===form.id?{...form}:u));
-      addToast("แก้ไขผู้ใช้สำเร็จ");
-    }
-    setModal(null);
-  };
-  const handleDelete=(id)=>{
-    if(confirm("ต้องการลบผู้ใช้นี้?")){
-      setUsers(p=>p.filter(u=>u.id!==id));
-      addToast("ลบผู้ใช้แล้ว","info");
-    }
-  };
-
-  return(
-    <div className="container fade-in">
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
-        <div><h1 className="page-title font-display">👥 จัดการผู้ใช้</h1><p className="page-sub">เพิ่ม แก้ไข ลบ ผู้ใช้ในระบบ</p></div>
-        <button className="btn btn-gold" onClick={openAdd}>+ เพิ่มผู้ใช้</button>
-      </div>
-      <div className="card" style={{overflow:"auto"}}>
-        <table className="data-table">
-          <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>จัดการ</th></tr></thead>
-          <tbody>
-            {users.map(u=>(
-              <tr key={u.id}>
-                <td style={{fontWeight:600}}>{u.name}</td>
-                <td>{u.email}</td>
-                <td><span className={`badge ${u.role==="admin"?"badge-danger":u.role==="instructor"?"badge-info":"badge-success"}`}>
-                  {u.role==="admin"?"ผู้ดูแล":u.role==="instructor"?"ผู้สอน":"ผู้เรียน"}
-                </span></td>
-                <td style={{display:"flex",gap:6}}>
-                  <button className="btn btn-sm btn-outline" onClick={()=>openEdit(u)}>✏️ แก้ไข</button>
-                  <button className="btn btn-sm btn-danger" onClick={()=>handleDelete(u.id)}>🗑️</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:24}}>
+        <div><h1 className="page-title font-display">📖 จัดการบทเรียน</h1><p className="page-sub">แก้ไขเนื้อหา เพิ่มรูปภาพ และจัดการข้อมูลบทเรียน</p></div>
+        {user.role==="admin"&&<button className="btn btn-gold" onClick={addNewLesson}>+ เพิ่มบทเรียนใหม่</button>}
       </div>
 
-      {modal && (
-        <div className="modal-overlay" onClick={()=>setModal(null)}>
-          <div className="modal-content" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{modal==="add"?"เพิ่มผู้ใช้ใหม่":"แก้ไขผู้ใช้"}</h3>
-              <button className="modal-close" onClick={()=>setModal(null)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group"><label className="label">ชื่อ</label><input className="input" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
-              <div className="form-group"><label className="label">อีเมล</label><input className="input" type="email" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))}/></div>
-              <div className="form-group"><label className="label">รหัสผ่าน</label><input className="input" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}/></div>
-              <div className="form-group">
-                <label className="label">บทบาท</label>
-                <select className="input" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))}>
-                  <option value="student">ผู้เรียน</option>
-                  <option value="instructor">ผู้สอน</option>
-                  <option value="admin">ผู้ดูแล</option>
-                </select>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={()=>setModal(null)}>ยกเลิก</button>
-              <button className="btn btn-gold" onClick={handleSave}>💾 บันทึก</button>
-            </div>
-          </div>
+      {!useFirebase && (
+        <div className="config-banner">
+          <h3>⚠️ โหมดออฟไลน์</h3>
+          <p>ยังไม่ได้เชื่อมต่อ Firebase — ข้อมูลจะเก็บเฉพาะในหน้าเว็บ (หายเมื่อรีเฟรช)</p>
+          <p>เพื่อเปิดใช้งาน Firebase ให้แก้ไข <code>FIREBASE_CONFIG</code> ในไฟล์ HTML</p>
         </div>
       )}
-    </div>
-  );
-}
 
-/* ──── Admin/Instructor: Quiz Management ──── */
-function QuizManagement({lessons,setLessons,addToast}){
-  const [selectedLesson,setSelectedLesson]=useState(lessons[0]?.id||"");
-  const [modal,setModal]=useState(null);
-  const [editQ,setEditQ]=useState(null);
-  const [form,setForm]=useState({q:"",opts:["","","",""],ans:0});
-
-  const lesson=lessons.find(l=>l.id===selectedLesson);
-  const pool=lesson?.quizPool||[];
-
-  const openAdd=()=>{setForm({q:"",opts:["","","",""],ans:0});setEditQ(null);setModal("add")};
-  const openEdit=(q,idx)=>{setForm({q:q.q,opts:[...q.opts],ans:q.ans});setEditQ(idx);setModal("edit")};
-
-  const handleSave=()=>{
-    if(!form.q || form.opts.some(o=>!o)){addToast("กรุณากรอกข้อมูลให้ครบ","error");return;}
-    setLessons(prev=>prev.map(l=>{
-      if(l.id!==selectedLesson) return l;
-      const newPool=[...l.quizPool];
-      if(modal==="add") newPool.push({...form});
-      else newPool[editQ]={...form};
-      return {...l,quizPool:newPool};
-    }));
-    addToast(modal==="add"?"เพิ่มข้อสอบสำเร็จ":"แก้ไขข้อสอบสำเร็จ");
-    setModal(null);
-  };
-
-  const handleDelete=(idx)=>{
-    if(!confirm("ลบข้อสอบนี้?")) return;
-    setLessons(prev=>prev.map(l=>{
-      if(l.id!==selectedLesson) return l;
-      const newPool=l.quizPool.filter((_,i)=>i!==idx);
-      return {...l,quizPool:newPool};
-    }));
-    addToast("ลบข้อสอบแล้ว","info");
-  };
-
-  return(
-    <div className="container fade-in">
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
-        <div><h1 className="page-title font-display">📝 จัดการ Quiz</h1><p className="page-sub">เพิ่ม แก้ไข ลบ ข้อสอบในคลัง</p></div>
-        <button className="btn btn-gold" onClick={openAdd}>+ เพิ่มข้อสอบ</button>
-      </div>
-
-      <div className="form-group" style={{maxWidth:300,marginBottom:20}}>
-        <label className="label">เลือกบทเรียน</label>
-        <select className="input" value={selectedLesson} onChange={e=>setSelectedLesson(e.target.value)}>
-          {lessons.map((l,i)=><option key={l.id} value={l.id}>บทที่ {i+1}: {l.title}</option>)}
-        </select>
-      </div>
-
-      <div className="card" style={{overflow:"auto"}}>
-        <table className="data-table">
-          <thead><tr><th>#</th><th>คำถาม</th><th>ตัวเลือก</th><th>คำตอบ</th><th>จัดการ</th></tr></thead>
-          <tbody>
-            {pool.map((q,i)=>(
-              <tr key={i}>
-                <td>{i+1}</td>
-                <td style={{maxWidth:250}}>{q.q}</td>
-                <td style={{fontSize:".8rem",maxWidth:200}}>{q.opts.join(" | ")}</td>
-                <td><span className="badge badge-success">{q.opts[q.ans]}</span></td>
-                <td style={{display:"flex",gap:6}}>
-                  <button className="btn btn-sm btn-outline" onClick={()=>openEdit(q,i)}>✏️</button>
-                  <button className="btn btn-sm btn-danger" onClick={()=>handleDelete(i)}>🗑️</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{padding:16,fontSize:".85rem",color:"var(--text-light)"}}>
-          รวม {pool.length} ข้อ ในคลัง (สุ่ม 10 ข้อต่อการทดสอบ)
-        </div>
-      </div>
-
-      {modal && (
-        <div className="modal-overlay" onClick={()=>setModal(null)}>
-          <div className="modal-content" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{modal==="add"?"เพิ่มข้อสอบใหม่":"แก้ไขข้อสอบ"}</h3>
-              <button className="modal-close" onClick={()=>setModal(null)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="label">คำถาม</label>
-                <textarea className="input" value={form.q} onChange={e=>setForm(p=>({...p,q:e.target.value}))}/>
-              </div>
-              {form.opts.map((o,i)=>(
-                <div className="form-group" key={i}>
-                  <label className="label">ตัวเลือกที่ {i+1} {i===form.ans && "✅ (คำตอบถูก)"}</label>
-                  <div style={{display:"flex",gap:8}}>
-                    <input className="input" value={o} onChange={e=>{
-                      const newOpts=[...form.opts];newOpts[i]=e.target.value;
-                      setForm(p=>({...p,opts:newOpts}));
-                    }}/>
-                    <button type="button" className={`btn btn-sm ${i===form.ans?"btn-gold":"btn-outline"}`}
-                      onClick={()=>setForm(p=>({...p,ans:i}))}>
-                      {i===form.ans?"✓ ถูก":"ตั้งเป็นคำตอบ"}
-                    </button>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {lessons.map((l,i)=>(
+          <div key={l.id} className="card" style={{display:"flex",alignItems:"stretch",overflow:"hidden"}}>
+            <div style={{width:8,background:l.color,flexShrink:0}}/>
+            <div style={{flex:1,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:14,flex:1,minWidth:200}}>
+                <span style={{fontSize:"2rem"}}>{l.icon}</span>
+                <div>
+                  <div style={{fontSize:".7rem",fontWeight:700,color:"var(--gold-dim)",letterSpacing:2}}>บทที่ {i+1}</div>
+                  <div style={{fontWeight:700,color:"var(--navy)",fontSize:"1.05rem"}}>{l.title}</div>
+                  <div style={{fontSize:".82rem",color:"var(--text-light)",marginTop:2}}>{l.description}</div>
+                  <div style={{marginTop:4,fontSize:".75rem",color:"var(--text-light)"}}>
+                    Quiz: {l.quizPool?.length||0} ข้อในคลัง
+                    {useFirebase && <span className="badge badge-success" style={{marginLeft:8}}>🔥 Synced</span>}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={()=>setModal(null)}>ยกเลิก</button>
-              <button className="btn btn-gold" onClick={handleSave}>💾 บันทึก</button>
+              </div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button className="btn btn-primary btn-sm" onClick={()=>{setEditingLesson(l);setEditMode("content")}}>
+                  ✏️ แก้ไขเนื้อหา
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={()=>{setMetaForm({...l});setEditMode("meta")}}>
+                  ⚙️ ข้อมูลบท
+                </button>
+                {user.role==="admin"&&(
+                  <button className="btn btn-danger btn-sm" onClick={()=>deleteLesson(l.id)}>🗑️</button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════
-   MAIN APP
-   ════════════════════════════════════════════ */
+/* ══════ SHARED COMPONENTS ══════ */
+function LoginPage({onLogin,users}){
+  const [email,setEmail]=useState("");const[pass,setPass]=useState("");const[err,setErr]=useState("");
+  const handleLogin=e=>{e.preventDefault();const u=users.find(u=>u.email===email&&u.password===pass);if(u)onLogin(u);else setErr("อีเมลหรือรหัสผ่านไม่ถูกต้อง")};
+  return(
+    <div className="login-wrap"><div className="login-bg"/><div className="login-curtain"/>
+      <div className="login-card"><div className="login-logo"><div style={{fontSize:"3rem",marginBottom:12}}>🪟</div><h1 className="font-display">Curtain Academy</h1><p>ระบบเรียนรู้ผ้าม่านออนไลน์</p></div>
+        <form onSubmit={handleLogin}><div className="form-group"><label className="label">อีเมล</label><input className="input" type="email" placeholder="your@email.com" value={email} onChange={e=>{setEmail(e.target.value);setErr("")}}/></div>
+          <div className="form-group"><label className="label">รหัสผ่าน</label><input className="input" type="password" placeholder="••••••" value={pass} onChange={e=>{setPass(e.target.value);setErr("")}}/></div>
+          {err&&<p style={{color:"#e74c3c",fontSize:".85rem",marginBottom:12}}>{err}</p>}
+          <button type="submit" className="btn btn-gold btn-lg" style={{width:"100%",justifyContent:"center"}}>เข้าสู่ระบบ</button>
+        </form>
+        <div className="login-hint"><p><strong style={{color:"var(--gold)"}}>บัญชีทดสอบ:</strong></p>
+          <p><code>admin@curtain.com</code> / <code>1234</code> (ผู้ดูแล)</p>
+          <p><code>instructor@curtain.com</code> / <code>1234</code> (ผู้สอน)</p>
+          <p><code>student@curtain.com</code> / <code>1234</code> (ผู้เรียน)</p>
+          {useFirebase&&<p style={{marginTop:8}}><span className="badge badge-success">🔥 Firebase Connected</span></p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Navbar({user,page,setPage,onLogout}){
+  const [mobileOpen,setMobileOpen]=useState(false);
+  const links=user.role==="admin"
+    ?[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"lesson-manage",label:"จัดการบทเรียน"},{id:"users",label:"จัดการผู้ใช้"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
+    :user.role==="instructor"
+    ?[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"lesson-manage",label:"จัดการบทเรียน"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
+    :[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}];
+  return(
+    <nav className="nav"><div className="nav-inner">
+      <div className="nav-brand" onClick={()=>setPage("dashboard")}><span>🪟</span><span>Curtain Academy</span></div>
+      <button className="nav-mobile-toggle" onClick={()=>setMobileOpen(!mobileOpen)}>☰</button>
+      <div className={`nav-links ${mobileOpen?"open":""}`}>{links.map(l=>(
+        <button key={l.id} className={`nav-link ${page===l.id?"active":""}`} onClick={()=>{setPage(l.id);setMobileOpen(false)}}>{l.label}</button>
+      ))}</div>
+      <div className="nav-user"><span>{user.name}</span><div className="nav-avatar">{user.name[0]}</div>
+        <button className="btn btn-sm" style={{background:"rgba(255,255,255,.1)",color:"var(--gold)",border:"1px solid rgba(200,164,78,.3)"}} onClick={onLogout}>ออก</button>
+      </div>
+    </div></nav>
+  );
+}
+
+function Dashboard({user,lessons,progress,users}){
+  const c=Object.values(progress).filter(v=>v===true).length;
+  return(
+    <div className="container fade-in"><div className="page-header"><h1 className="page-title font-display">สวัสดีครับ, {user.name} 👋</h1><p className="page-sub">{user.role==="admin"?"ยินดีต้อนรับผู้ดูแลระบบ":user.role==="instructor"?"ยินดีต้อนรับอาจารย์ผู้สอน":"ยินดีต้อนรับสู่ระบบเรียนรู้ผ้าม่าน"}</p></div>
+      <div className="grid-3" style={{marginBottom:32}}>
+        <div className="stat-card"><div className="stat-icon" style={{background:"rgba(200,164,78,.12)",color:"var(--gold)"}}>📚</div><div><div className="stat-value">{lessons.length}</div><div className="stat-label">บทเรียนทั้งหมด</div></div></div>
+        {user.role==="student"?(<div className="stat-card"><div className="stat-icon" style={{background:"rgba(45,138,78,.12)",color:"var(--success)"}}>✅</div><div><div className="stat-value">{c}/{lessons.length}</div><div className="stat-label">บทที่ผ่านแล้ว</div></div></div>
+        ):(<div className="stat-card"><div className="stat-icon" style={{background:"rgba(41,128,185,.12)",color:"var(--info)"}}>👥</div><div><div className="stat-value">{users.filter(u=>u.role==="student").length}</div><div className="stat-label">ผู้เรียนทั้งหมด</div></div></div>)}
+        <div className="stat-card"><div className="stat-icon" style={{background:useFirebase?"rgba(255,152,0,.12)":"rgba(142,68,173,.12)",color:useFirebase?"#ff9800":"#8e44ad"}}>{useFirebase?"🔥":"🎮"}</div><div><div className="stat-value">{useFirebase?"Online":"Offline"}</div><div className="stat-label">{useFirebase?"Firebase เชื่อมต่อแล้ว":"โหมดออฟไลน์"}</div></div></div>
+      </div>
+      {user.role==="student"&&(<div className="card" style={{padding:24}}><h3 style={{marginBottom:16,color:"var(--navy)"}}>ความก้าวหน้าของคุณ</h3><div style={{background:"var(--cream-dark)",borderRadius:99,height:20,overflow:"hidden"}}><div style={{width:`${(c/lessons.length)*100}%`,height:"100%",background:"linear-gradient(90deg,var(--gold),var(--gold-light))",borderRadius:99,transition:"width .5s",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--navy)",fontSize:".7rem",fontWeight:700,minWidth:c>0?40:0}}>{c>0&&`${Math.round((c/lessons.length)*100)}%`}</div></div></div>)}
+    </div>
+  );
+}
+
+function LessonsList({lessons,progress,user,onSelectLesson}){
+  const isUnlocked=i=>{if(user.role!=="student")return true;if(i===0)return true;return progress[lessons[i-1].id]===true};
+  return(
+    <div className="container fade-in"><div className="page-header"><h1 className="page-title font-display">📚 บทเรียนทั้งหมด</h1><p className="page-sub">เรียนรู้ทีละบท ทำ Quiz ให้ได้ 10/10 เพื่อปลดล็อกบทถัดไป</p></div>
+      <div className="grid-3">{lessons.map((l,i)=>{const u=isUnlocked(i);const c=progress[l.id]===true;
+        return(<div key={l.id} className={`lesson-card ${!u?"locked":""}`} onClick={()=>u&&onSelectLesson(l,i)}>
+          {!u&&<div className="lock-overlay">🔒</div>}
+          <div className="lesson-cover" style={{background:l.color}}><span style={{position:"relative",zIndex:1,filter:!u?"blur(2px)":"none"}}>{l.icon}</span></div>
+          <div className="lesson-body"><div className="lesson-num">บทที่ {i+1}</div><div className="lesson-title">{l.title}</div><div className="lesson-desc">{l.description}</div>
+            <div className="lesson-footer">{c?<span className="badge badge-success">✓ ผ่านแล้ว</span>:u?<span className="badge badge-gold">พร้อมเรียน</span>:<span className="badge badge-danger">🔒 ยังไม่ปลดล็อก</span>}<span style={{fontSize:".78rem",color:"var(--text-light)"}}>Quiz 10 ข้อ</span></div>
+          </div></div>);
+      })}</div>
+    </div>
+  );
+}
+
+function LessonView({lesson,lessonIndex,onBack,onStartQuiz}){
+  return(
+    <div className="container fade-in"><button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
+      <div className="card" style={{padding:"32px 36px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}><span style={{fontSize:"2.2rem"}}>{lesson.icon}</span><div><div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold-dim)",letterSpacing:2,textTransform:"uppercase"}}>บทที่ {lessonIndex+1}</div><h1 className="font-display" style={{fontSize:"1.5rem",color:"var(--navy)"}}>{lesson.title}</h1></div></div>
+        <div className="lesson-content" dangerouslySetInnerHTML={{__html:lesson.content}}/>
+        <div className="lesson-nav"><a href={lesson.downloadUrl||"#"} className="btn btn-outline btn-sm" target="_blank" rel="noopener">📥 ดาวน์โหลดเอกสาร</a><button className="btn btn-gold" onClick={onStartQuiz}>ทำแบบทดสอบ →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function QuizPage({lesson,lessonIndex,onBack,onPass,addToast}){
+  const[questions,setQuestions]=useState([]);const[current,setCurrent]=useState(0);const[selected,setSelected]=useState(null);const[answered,setAnswered]=useState(false);const[results,setResults]=useState([]);const[done,setDone]=useState(false);
+  const initQuiz=()=>{
+    const pool=[...lesson.quizPool];const shuffled=pool.sort(()=>Math.random()-.5).slice(0,10);
+    const prepared=shuffled.map(q=>{const optPairs=q.opts.map((o,i)=>({text:o,origIdx:i}));optPairs.sort(()=>Math.random()-.5);const newAns=optPairs.findIndex(p=>p.origIdx===q.ans);return{q:q.q,opts:optPairs.map(p=>p.text),ans:newAns}});
+    setQuestions(prepared);setCurrent(0);setSelected(null);setAnswered(false);setResults([]);setDone(false);
+  };
+  useEffect(initQuiz,[lesson]);
+  if(!questions.length)return null;
+  const handleConfirm=()=>{if(selected===null)return;setAnswered(true);setResults(p=>[...p,selected===questions[current].ans])};
+  const handleNext=()=>{if(current<questions.length-1){setCurrent(c=>c+1);setSelected(null);setAnswered(false)}else setDone(true)};
+  const score=results.filter(Boolean).length;const perfect=score===10;
+
+  if(done)return(
+    <div className="container fade-in"><div className="card" style={{padding:40}}><div className="quiz-result">
+      {perfect&&<Confetti/>}<div style={{fontSize:"4rem",marginBottom:16}}>{perfect?"🎉":"😢"}</div>
+      <div className={`quiz-score ${perfect?"perfect":"fail"}`}>{score}/10</div>
+      <p style={{fontSize:"1.2rem",margin:"16px 0",color:perfect?"var(--success)":"var(--danger)"}}>{perfect?"ยอดเยี่ยม! คุณผ่านบทนี้แล้ว!":"ต้องได้ 10/10 ถึงจะผ่าน ลองอีกครั้ง!"}</p>
+      <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+        {perfect?<button className="btn btn-gold btn-lg" onClick={()=>{onPass(lesson.id);addToast("ปลดล็อกบทถัดไปแล้ว! 🎉")}}>ดำเนินการต่อ →</button>
+          :<button className="btn btn-primary btn-lg" onClick={initQuiz}>ลองอีกครั้ง ↺</button>}
+        <button className="btn btn-outline" onClick={onBack}>กลับหน้าบทเรียน</button>
+      </div>
+    </div></div></div>
+  );
+
+  const q=questions[current];
+  return(
+    <div className="container fade-in"><button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
+      <div className="card" style={{padding:"32px 36px"}}><div className="quiz-container">
+        <div style={{textAlign:"center",marginBottom:24}}><h2 className="font-display" style={{color:"var(--navy)"}}>แบบทดสอบ: {lesson.title}</h2>
+          <div className="quiz-progress">{questions.map((_,i)=>(<div key={i} className={`quiz-dot ${i===current?"current":i<results.length?(results[i]?"correct":"wrong"):"pending"}`}>{i+1}</div>))}</div>
+        </div>
+        <div style={{fontSize:".82rem",color:"var(--text-light)",marginBottom:8}}>ข้อ {current+1}/{questions.length}</div>
+        <div className="quiz-question">{q.q}</div>
+        {q.opts.map((o,i)=>{let cls="quiz-option";if(answered){if(i===q.ans)cls+=" correct-answer";else if(i===selected)cls+=" wrong-answer"}else if(i===selected)cls+=" selected";return<button key={i} className={cls} onClick={()=>!answered&&setSelected(i)}>{o}</button>})}
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:16}}>
+          {!answered?<button className="btn btn-primary" disabled={selected===null} onClick={handleConfirm}>ยืนยันคำตอบ</button>
+            :<button className="btn btn-gold" onClick={handleNext}>{current<questions.length-1?"ข้อถัดไป →":"ดูผลลัพธ์"}</button>}
+        </div>
+      </div></div>
+    </div>
+  );
+}
+
+function Calculator(){
+  const[tw,sTw]=useState(300);const[h,sH]=useState(260);const[pt,sPt]=useState("2.5");const[fw,sFw]=useState(140);
+  const[pm,sPm]=useState(450);const[sc,sSc]=useState(300);const[tc,sTc]=useState(250);const[ic,sIc]=useState(800);const[ha,sHa]=useState(25);
+  const tfW=tw*parseFloat(pt);const pan=Math.ceil(tfW/fw);const lpp=h+ha;const tf=(pan*lpp/100).toFixed(1);
+  const fC=(tf*pm).toFixed(0);const tS=(pan*sc).toFixed(0);const tT=((tw/100)*tc).toFixed(0);const gt=(parseFloat(fC)+parseFloat(tS)+parseFloat(tT)+ic).toFixed(0);
+  return(
+    <div className="container fade-in"><div className="page-header"><h1 className="page-title font-display">🧮 เครื่องคำนวณผ้าม่าน</h1><p className="page-sub">คำนวณปริมาณผ้าและราคา</p></div>
+      <div className="card" style={{padding:32}}><div className="calc-wrap">
+        <div className="calc-grid">
+          <div className="form-group"><label className="label">ความกว้างราง (ซม.)</label><input className="input" type="number" value={tw} onChange={e=>sTw(+e.target.value)}/></div>
+          <div className="form-group"><label className="label">ความสูงม่าน (ซม.)</label><input className="input" type="number" value={h} onChange={e=>sH(+e.target.value)}/></div>
+          <div className="form-group"><label className="label">อัตราจีบ</label><select className="input" value={pt} onChange={e=>sPt(e.target.value)}><option value="1.5">1.5× (ตาไก่)</option><option value="2">2× (จีบดินสอ)</option><option value="2.5">2.5× (จีบ 2 นิ้ว)</option><option value="3">3× (จีบ 3 นิ้ว)</option></select></div>
+          <div className="form-group"><label className="label">หน้ากว้างผ้า (ซม.)</label><select className="input" value={fw} onChange={e=>sFw(+e.target.value)}><option value="140">140</option><option value="280">280</option><option value="300">300</option></select></div>
+          <div className="form-group"><label className="label">ราคาผ้า (บาท/ม.)</label><input className="input" type="number" value={pm} onChange={e=>sPm(+e.target.value)}/></div>
+          <div className="form-group"><label className="label">ค่าเย็บ (บาท/หน้า)</label><input className="input" type="number" value={sc} onChange={e=>sSc(+e.target.value)}/></div>
+          <div className="form-group"><label className="label">ค่าราง (บาท/ม.)</label><input className="input" type="number" value={tc} onChange={e=>sTc(+e.target.value)}/></div>
+          <div className="form-group"><label className="label">ค่าติดตั้ง (บาท)</label><input className="input" type="number" value={ic} onChange={e=>sIc(+e.target.value)}/></div>
+        </div>
+        <div className="calc-result"><h3 style={{color:"var(--gold)",marginBottom:16,fontFamily:"'Playfair Display',serif"}}>ผลการคำนวณ</h3>
+          <div className="calc-result-row"><span>ความกว้างผ้ารวม</span><span>{tfW.toFixed(0)} ซม.</span></div>
+          <div className="calc-result-row"><span>จำนวนหน้าผ้า</span><span>{pan} หน้า</span></div>
+          <div className="calc-result-row"><span>ความยาวต่อหน้า</span><span>{lpp} ซม.</span></div>
+          <div className="calc-result-row"><span>ปริมาณผ้ารวม</span><span>{tf} เมตร</span></div>
+          <div style={{borderTop:"1px solid rgba(255,255,255,.2)",margin:"8px 0"}}/>
+          <div className="calc-result-row"><span>ค่าผ้า</span><span>฿{parseInt(fC).toLocaleString()}</span></div>
+          <div className="calc-result-row"><span>ค่าตัดเย็บ</span><span>฿{parseInt(tS).toLocaleString()}</span></div>
+          <div className="calc-result-row"><span>ค่าราง</span><span>฿{parseInt(tT).toLocaleString()}</span></div>
+          <div className="calc-result-row"><span>ค่าติดตั้ง</span><span>฿{ic.toLocaleString()}</span></div>
+          <div className="calc-result-row"><span style={{color:"var(--gold)"}}>💰 รวม</span><span style={{color:"var(--gold)",fontSize:"1.3rem"}}>฿{parseInt(gt).toLocaleString()}</span></div>
+        </div>
+      </div></div>
+    </div>
+  );
+}
+
+function GamePage(){
+  const[mode,setMode]=useState(null);
+  if(!mode)return(<div className="container fade-in"><div className="page-header"><h1 className="page-title font-display">🎮 เกมเสริมทักษะ</h1></div><div className="grid-2">
+    <div className="card" style={{padding:32,textAlign:"center",cursor:"pointer"}} onClick={()=>setMode("match")}><div style={{fontSize:"3.5rem",marginBottom:16}}>🃏</div><h3 style={{color:"var(--navy)"}}>เกมจับคู่</h3><p style={{fontSize:".88rem",color:"var(--text-light)"}}>จับคู่ชื่อผ้าม่านไทย-อังกฤษ</p><button className="btn btn-gold" style={{marginTop:16}}>เล่นเลย</button></div>
+    <div className="card" style={{padding:32,textAlign:"center",cursor:"pointer"}} onClick={()=>setMode("speed")}><div style={{fontSize:"3.5rem",marginBottom:16}}>⚡</div><h3 style={{color:"var(--navy)"}}>คำนวณแข่งเวลา</h3><p style={{fontSize:".88rem",color:"var(--text-light)"}}>ตอบโจทย์คำนวณให้เร็วที่สุด</p><button className="btn btn-gold" style={{marginTop:16}}>เล่นเลย</button></div>
+  </div></div>);
+  if(mode==="match")return<MatchGame onBack={()=>setMode(null)}/>;
+  return<SpeedGame onBack={()=>setMode(null)}/>;
+}
+
+function MatchGame({onBack}){
+  const[cards,setCards]=useState([]);const[flipped,setFlipped]=useState([]);const[matched,setMatched]=useState([]);const[moves,setMoves]=useState(0);const[won,setWon]=useState(false);const lock=useRef(false);
+  const init=()=>{const pairs=GAME_PAIRS.slice(0,6);const d=[];pairs.forEach(p=>{d.push({uid:p.id+"a",pairId:p.id,text:p.text,type:"th"});d.push({uid:p.id+"b",pairId:p.id,text:p.match,type:"en"})});d.sort(()=>Math.random()-.5);setCards(d);setFlipped([]);setMatched([]);setMoves(0);setWon(false)};
+  useEffect(init,[]);
+  const flip=i=>{if(lock.current)return;if(flipped.includes(i)||matched.includes(cards[i].pairId))return;const nf=[...flipped,i];setFlipped(nf);
+    if(nf.length===2){setMoves(m=>m+1);lock.current=true;const[a,b]=nf;
+      if(cards[a].pairId===cards[b].pairId){setTimeout(()=>{const nm=[...matched,cards[a].pairId];setMatched(nm);setFlipped([]);lock.current=false;if(nm.length===6)setWon(true)},600)}
+      else{setTimeout(()=>{setFlipped([]);lock.current=false},1000)}}};
+  return(
+    <div className="container fade-in"><button className="btn btn-outline btn-sm" onClick={onBack} style={{marginBottom:20}}>← กลับ</button>
+      <div className="card" style={{padding:32}}><div style={{textAlign:"center",marginBottom:20}}><h2 className="font-display" style={{color:"var(--navy)"}}>🃏 เกมจับคู่</h2><p style={{color:"var(--text-light)",fontSize:".88rem"}}>เปิดแล้ว: {moves} ครั้ง</p></div>
+        {won&&<Confetti/>}
+        {won?(<div style={{textAlign:"center",padding:40}}><div style={{fontSize:"4rem",marginBottom:16}}>🎉</div><h3 style={{color:"var(--gold)",fontSize:"1.6rem",fontFamily:"'Playfair Display',serif"}}>ยินดีด้วย!</h3><p style={{color:"var(--text-light)",margin:"12px 0"}}>{moves} ครั้ง</p><button className="btn btn-gold" onClick={init}>เล่นอีกครั้ง</button></div>
+        ):(<div className="game-board" style={{gridTemplateColumns:"repeat(4,1fr)"}}>{cards.map((c,i)=>{const f=flipped.includes(i);const m=matched.includes(c.pairId);
+          return(<div key={c.uid} className={`game-card-cell ${f?"flipped":""} ${m?"matched":""}`} onClick={()=>flip(i)}><div className="game-card-inner"><div className="game-card-front">🪟</div><div className="game-card-back"><span style={{fontSize:c.type==="th"?".85rem":".75rem"}}>{c.text}</span><span style={{fontSize:".6rem",color:"var(--text-light)"}}>{c.type==="th"?"🇹🇭":"🇬🇧"}</span></div></div></div>)
+        })}</div>)}
+      </div>
+    </div>
+  );
+}
+
+function SpeedGame({onBack}){
+  const[qi,setQi]=useState(0);const[ans,setAns]=useState("");const[score,setScore]=useState(0);const[time,setTime]=useState(60);const[over,setOver]=useState(false);const[fb,setFb]=useState(null);const t=useRef();
+  const qs=[{q:"ราง 2 ม. ×2.5 → ความกว้างผ้า (ซม.)?",a:500},{q:"ราง 3 ม. ×2 → ความกว้างผ้า?",a:600},{q:"700÷140 = กี่หน้า?",a:5},{q:"500÷140 = กี่หน้า? (ปัดขึ้น)",a:4},{q:"สูง260+พับ25=?",a:285},{q:"6หน้า×285÷100=?(×10)",a:171},{q:"ผ้า17ม.×450=?",a:7650},{q:"วงกบ150+เผื่อ2ข้าง(20)=?",a:190},{q:"ราง4ม.×1.5=?",a:600},{q:"5หน้า×300=?",a:1500}];
+  const startTimer=()=>{t.current=setInterval(()=>{setTime(v=>{if(v<=1){clearInterval(t.current);setOver(true);return 0}return v-1})},1000)};
+  useEffect(()=>{startTimer();return()=>clearInterval(t.current)},[]);
+  const submit=e=>{e.preventDefault();if(over)return;const correct=parseInt(ans)===qs[qi].a;if(correct)setScore(s=>s+1);setFb(correct?"correct":"wrong");
+    setTimeout(()=>{setFb(null);setAns("");if(qi<qs.length-1)setQi(i=>i+1);else{clearInterval(t.current);setOver(true)}},600)};
+  const restart=()=>{setQi(0);setScore(0);setTime(60);setOver(false);setAns("");startTimer()};
+  if(over)return(<div className="container fade-in"><button className="btn btn-outline btn-sm" onClick={()=>{clearInterval(t.current);onBack()}} style={{marginBottom:20}}>← กลับ</button><div className="card" style={{padding:40,textAlign:"center"}}><div style={{fontSize:"4rem",marginBottom:16}}>⏱️</div><h2 className="font-display" style={{color:"var(--navy)"}}>จบเกม!</h2><div style={{fontSize:"3rem",fontWeight:800,color:"var(--gold)",margin:"16px 0"}}>{score}/{qs.length}</div><button className="btn btn-gold" style={{marginTop:20}} onClick={restart}>เล่นอีกครั้ง</button></div></div>);
+  return(<div className="container fade-in"><button className="btn btn-outline btn-sm" onClick={()=>{clearInterval(t.current);onBack()}} style={{marginBottom:20}}>← กลับ</button><div className="card" style={{padding:32}}>
+    <div style={{textAlign:"center",marginBottom:24}}><h2 className="font-display" style={{color:"var(--navy)"}}>⚡ คำนวณแข่งเวลา</h2><div className="game-timer" style={{color:time<=10?"var(--danger)":"var(--navy)",marginTop:8}}>⏱️ {time}s</div><p style={{color:"var(--text-light)",fontSize:".85rem",marginTop:4}}>คะแนน: {score} | ข้อ {qi+1}/{qs.length}</p></div>
+    <div style={{maxWidth:500,margin:"0 auto"}}><div className="quiz-question" style={{background:fb==="correct"?"rgba(45,138,78,.1)":fb==="wrong"?"rgba(192,57,43,.1)":"transparent",padding:16,borderRadius:"var(--radius-sm)",transition:"background .3s"}}>{qs[qi].q}</div>
+      <form onSubmit={submit} style={{display:"flex",gap:10,marginTop:16}}><input className="input" type="number" placeholder="คำตอบ..." value={ans} onChange={e=>setAns(e.target.value)} autoFocus style={{fontSize:"1.1rem",flex:1}}/><button type="submit" className="btn btn-gold">ตอบ</button></form>
+    </div></div></div>);
+}
+
+function UserManagement({users,setUsers,addToast}){
+  const[modal,setModal]=useState(null);const[form,setForm]=useState({name:"",email:"",role:"student",password:"1234"});
+  const openAdd=()=>{setForm({name:"",email:"",role:"student",password:"1234"});setModal("add")};
+  const openEdit=u=>{setForm({...u});setModal("edit")};
+  const save=()=>{if(!form.name||!form.email){addToast("กรอกข้อมูลให้ครบ","error");return}
+    if(modal==="add"){setUsers(p=>[...p,{...form,id:"u"+Date.now()}]);addToast("เพิ่มผู้ใช้สำเร็จ")}
+    else{setUsers(p=>p.map(u=>u.id===form.id?{...form}:u));addToast("แก้ไขสำเร็จ")}setModal(null)};
+  const del=id=>{if(confirm("ลบผู้ใช้นี้?")){setUsers(p=>p.filter(u=>u.id!==id));addToast("ลบแล้ว","info")}};
+  return(
+    <div className="container fade-in"><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:24}}><div><h1 className="page-title font-display">👥 จัดการผู้ใช้</h1></div><button className="btn btn-gold" onClick={openAdd}>+ เพิ่มผู้ใช้</button></div>
+      <div className="card" style={{overflow:"auto"}}><table className="data-table"><thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>จัดการ</th></tr></thead><tbody>{users.map(u=>(<tr key={u.id}><td style={{fontWeight:600}}>{u.name}</td><td>{u.email}</td><td><span className={`badge ${u.role==="admin"?"badge-danger":u.role==="instructor"?"badge-info":"badge-success"}`}>{u.role==="admin"?"ผู้ดูแล":u.role==="instructor"?"ผู้สอน":"ผู้เรียน"}</span></td><td style={{display:"flex",gap:6}}><button className="btn btn-sm btn-outline" onClick={()=>openEdit(u)}>✏️</button><button className="btn btn-sm btn-danger" onClick={()=>del(u.id)}>🗑️</button></td></tr>))}</tbody></table></div>
+      {modal&&(<div className="modal-overlay" onClick={()=>setModal(null)}><div className="modal-content" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3>{modal==="add"?"เพิ่มผู้ใช้":"แก้ไขผู้ใช้"}</h3><button className="modal-close" onClick={()=>setModal(null)}>✕</button></div>
+        <div className="modal-body"><div className="form-group"><label className="label">ชื่อ</label><input className="input" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div><div className="form-group"><label className="label">อีเมล</label><input className="input" type="email" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))}/></div><div className="form-group"><label className="label">รหัสผ่าน</label><input className="input" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}/></div>
+          <div className="form-group"><label className="label">บทบาท</label><select className="input" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))}><option value="student">ผู้เรียน</option><option value="instructor">ผู้สอน</option><option value="admin">ผู้ดูแล</option></select></div></div>
+        <div className="modal-footer"><button className="btn btn-outline" onClick={()=>setModal(null)}>ยกเลิก</button><button className="btn btn-gold" onClick={save}>💾 บันทึก</button></div></div></div>)}
+    </div>
+  );
+}
+
+function QuizManagement({lessons,setLessons,addToast}){
+  const[sl,setSl]=useState(lessons[0]?.id||"");const[modal,setModal]=useState(null);const[eIdx,setEIdx]=useState(null);const[form,setForm]=useState({q:"",opts:["","","",""],ans:0});
+  const lesson=lessons.find(l=>l.id===sl);const pool=lesson?.quizPool||[];
+  const openAdd=()=>{setForm({q:"",opts:["","","",""],ans:0});setEIdx(null);setModal("add")};
+  const openEdit=(q,i)=>{setForm({q:q.q,opts:[...q.opts],ans:q.ans});setEIdx(i);setModal("edit")};
+  const save=async()=>{if(!form.q||form.opts.some(o=>!o)){addToast("กรอกข้อมูลให้ครบ","error");return}
+    setLessons(prev=>prev.map(l=>{if(l.id!==sl)return l;const np=[...l.quizPool];if(modal==="add")np.push({...form});else np[eIdx]={...form};return{...l,quizPool:np}}));
+    if(useFirebase){const l=lessons.find(x=>x.id===sl);const np=[...(l?.quizPool||[])];if(modal==="add")np.push({...form});else np[eIdx]={...form};
+      try{await db.collection("lessons").doc(sl).update({quizPool:np});addToast("บันทึก Quiz ลง Firebase สำเร็จ! 🔥")}catch(e){addToast("บันทึกล้มเหลว","error")}}
+    else addToast(modal==="add"?"เพิ่มสำเร็จ":"แก้ไขสำเร็จ");setModal(null)};
+  const del=async(i)=>{if(!confirm("ลบข้อสอบนี้?"))return;setLessons(prev=>prev.map(l=>{if(l.id!==sl)return l;return{...l,quizPool:l.quizPool.filter((_,j)=>j!==i)}}));
+    if(useFirebase){const l=lessons.find(x=>x.id===sl);const np=(l?.quizPool||[]).filter((_,j)=>j!==i);try{await db.collection("lessons").doc(sl).update({quizPool:np})}catch(e){}}addToast("ลบแล้ว","info")};
+  return(
+    <div className="container fade-in"><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:24}}><div><h1 className="page-title font-display">📝 จัดการ Quiz</h1></div><button className="btn btn-gold" onClick={openAdd}>+ เพิ่มข้อสอบ</button></div>
+      <div className="form-group" style={{maxWidth:300,marginBottom:20}}><label className="label">เลือกบทเรียน</label><select className="input" value={sl} onChange={e=>setSl(e.target.value)}>{lessons.map((l,i)=><option key={l.id} value={l.id}>บทที่ {i+1}: {l.title}</option>)}</select></div>
+      <div className="card" style={{overflow:"auto"}}><table className="data-table"><thead><tr><th>#</th><th>คำถาม</th><th>คำตอบ</th><th>จัดการ</th></tr></thead><tbody>{pool.map((q,i)=>(<tr key={i}><td>{i+1}</td><td style={{maxWidth:300}}>{q.q}</td><td><span className="badge badge-success">{q.opts[q.ans]}</span></td><td style={{display:"flex",gap:6}}><button className="btn btn-sm btn-outline" onClick={()=>openEdit(q,i)}>✏️</button><button className="btn btn-sm btn-danger" onClick={()=>del(i)}>🗑️</button></td></tr>))}</tbody></table>
+        <div style={{padding:16,fontSize:".85rem",color:"var(--text-light)"}}>รวม {pool.length} ข้อ (สุ่ม 10 ข้อ/ครั้ง)</div></div>
+      {modal&&(<div className="modal-overlay" onClick={()=>setModal(null)}><div className="modal-content" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3>{modal==="add"?"เพิ่มข้อสอบ":"แก้ไขข้อสอบ"}</h3><button className="modal-close" onClick={()=>setModal(null)}>✕</button></div>
+        <div className="modal-body"><div className="form-group"><label className="label">คำถาม</label><textarea className="input" value={form.q} onChange={e=>setForm(p=>({...p,q:e.target.value}))}/></div>
+          {form.opts.map((o,i)=>(<div className="form-group" key={i}><label className="label">ตัวเลือก {i+1} {i===form.ans&&"✅"}</label><div style={{display:"flex",gap:8}}><input className="input" value={o} onChange={e=>{const n=[...form.opts];n[i]=e.target.value;setForm(p=>({...p,opts:n}))}}/><button type="button" className={`btn btn-sm ${i===form.ans?"btn-gold":"btn-outline"}`} onClick={()=>setForm(p=>({...p,ans:i}))}>{i===form.ans?"✓":"ตั้ง"}</button></div></div>))}
+        </div><div className="modal-footer"><button className="btn btn-outline" onClick={()=>setModal(null)}>ยกเลิก</button><button className="btn btn-gold" onClick={save}>💾 บันทึก</button></div></div></div>)}
+    </div>
+  );
+}
+
+/* ══════ MAIN APP ══════ */
 function App(){
-  const [user,setUser]=useState(null);
-  const [page,setPage]=useState("dashboard");
-  const [users,setUsers]=useState(INITIAL_USERS);
-  const [lessons,setLessons]=useState(INITIAL_LESSONS);
-  const [progress,setProgress]=useState({});
-  const [selectedLesson,setSelectedLesson]=useState(null);
-  const [lessonIndex,setLessonIndex]=useState(0);
-  const [viewMode,setViewMode]=useState("list"); // list | content | quiz
-  const {toasts,addToast}=useToast();
+  const[user,setUser]=useState(null);const[page,setPage]=useState("dashboard");const[users,setUsers]=useState(DEFAULT_USERS);
+  const[lessons,setLessons]=useState(DEFAULT_LESSONS);const[progress,setProgress]=useState({});
+  const[selLesson,setSelLesson]=useState(null);const[lessonIdx,setLessonIdx]=useState(0);const[viewMode,setViewMode]=useState("list");
+  const{toasts,addToast}=useToast();
 
-  const handleLogin=(u)=>{setUser(u);setPage("dashboard");addToast(`ยินดีต้อนรับ ${u.name}`)};
-  const handleLogout=()=>{setUser(null);setPage("dashboard");setViewMode("list");setSelectedLesson(null)};
-  const handleSelectLesson=(l,i)=>{setSelectedLesson(l);setLessonIndex(i);setViewMode("content");setPage("lessons")};
-  const handlePassQuiz=(lessonId)=>{setProgress(p=>({...p,[lessonId]:true}));setViewMode("list")};
+  // Firebase real-time listener
+  useEffect(()=>{
+    if(!useFirebase)return;
+    // Load initial lessons from Firestore
+    fbLoadLessons().then(data=>{if(data&&data.length)setLessons(data)});
+    // Real-time listener
+    const unsub=fbListenLessons(data=>{setLessons(data)});
+    return unsub;
+  },[]);
 
-  if(!user) return <><LoginPage onLogin={handleLogin} users={users}/><Toast toasts={toasts}/></>;
+  const handleLogin=u=>{setUser(u);setPage("dashboard");addToast(`ยินดีต้อนรับ ${u.name}`)};
+  const handleLogout=()=>{setUser(null);setPage("dashboard");setViewMode("list");setSelLesson(null)};
+  const handleSelectLesson=(l,i)=>{setSelLesson(l);setLessonIdx(i);setViewMode("content");setPage("lessons")};
+  const handlePassQuiz=id=>{setProgress(p=>({...p,[id]:true}));setViewMode("list")};
+
+  if(!user)return<><LoginPage onLogin={handleLogin} users={users}/><Toast toasts={toasts}/></>;
+
+  // Keep selLesson in sync with lessons
+  const currentLesson=selLesson?lessons.find(l=>l.id===selLesson.id)||selLesson:null;
 
   let content;
-  if(page==="dashboard") content=<Dashboard user={user} lessons={lessons} progress={progress} users={users}/>;
+  if(page==="dashboard")content=<Dashboard user={user} lessons={lessons} progress={progress} users={users}/>;
   else if(page==="lessons"){
-    if(viewMode==="quiz" && selectedLesson)
-      content=<QuizPage lesson={selectedLesson} lessonIndex={lessonIndex}
-        onBack={()=>setViewMode("content")} onPass={handlePassQuiz} addToast={addToast}/>;
-    else if(viewMode==="content" && selectedLesson)
-      content=<LessonView lesson={selectedLesson} lessonIndex={lessonIndex}
-        onBack={()=>{setViewMode("list");setSelectedLesson(null)}}
-        onStartQuiz={()=>setViewMode("quiz")}/>;
-    else
-      content=<LessonsList lessons={lessons} progress={progress} user={user} onSelectLesson={handleSelectLesson}/>;
+    if(viewMode==="quiz"&&currentLesson)content=<QuizPage lesson={currentLesson} lessonIndex={lessonIdx} onBack={()=>setViewMode("content")} onPass={handlePassQuiz} addToast={addToast}/>;
+    else if(viewMode==="content"&&currentLesson)content=<LessonView lesson={currentLesson} lessonIndex={lessonIdx} onBack={()=>{setViewMode("list");setSelLesson(null)}} onStartQuiz={()=>setViewMode("quiz")}/>;
+    else content=<LessonsList lessons={lessons} progress={progress} user={user} onSelectLesson={handleSelectLesson}/>;
   }
-  else if(page==="calculator") content=<Calculator/>;
-  else if(page==="game") content=<GamePage/>;
-  else if(page==="users" && user.role==="admin") content=<UserManagement users={users} setUsers={setUsers} addToast={addToast}/>;
-  else if(page==="quiz-manage" && (user.role==="admin"||user.role==="instructor")) content=<QuizManagement lessons={lessons} setLessons={setLessons} addToast={addToast}/>;
+  else if(page==="lesson-manage")content=<LessonManagement lessons={lessons} setLessons={setLessons} addToast={addToast} user={user}/>;
+  else if(page==="calculator")content=<Calculator/>;
+  else if(page==="game")content=<GamePage/>;
+  else if(page==="users"&&user.role==="admin")content=<UserManagement users={users} setUsers={setUsers} addToast={addToast}/>;
+  else if(page==="quiz-manage"&&(user.role==="admin"||user.role==="instructor"))content=<QuizManagement lessons={lessons} setLessons={setLessons} addToast={addToast}/>;
   else content=<Dashboard user={user} lessons={lessons} progress={progress} users={users}/>;
 
-  return(
-    <>
-      <Navbar user={user} page={page} setPage={(p)=>{setPage(p);setViewMode("list");setSelectedLesson(null)}} onLogout={handleLogout}/>
-      <main style={{flex:1,paddingBottom:40}}>{content}</main>
-      <footer style={{
-        background:"var(--navy)",padding:"20px 24px",textAlign:"center",
-        color:"rgba(255,255,255,.4)",fontSize:".8rem"
-      }}>
-        Curtain Academy © 2026 — ระบบเรียนรู้ผ้าม่านออนไลน์ | Powered by React
-      </footer>
-      <Toast toasts={toasts}/>
-    </>
-  );
+  return(<>
+    <Navbar user={user} page={page} setPage={p=>{setPage(p);setViewMode("list");setSelLesson(null)}} onLogout={handleLogout}/>
+    <main style={{flex:1,paddingBottom:40}}>{content}</main>
+    <footer style={{background:"var(--navy)",padding:"20px 24px",textAlign:"center",color:"rgba(255,255,255,.4)",fontSize:".8rem"}}>
+      Curtain Academy © 2026 — ระบบเรียนรู้ผ้าม่านออนไลน์ {useFirebase&&"| 🔥 Firebase Connected"}
+    </footer>
+    <Toast toasts={toasts}/>
+  </>);
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
