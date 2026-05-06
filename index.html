@@ -502,6 +502,47 @@ async function fbSaveUser(user){
 async function fbDeleteUser(id){
   if(!useFirebase||!db)return;
   await db.collection("users").doc(id).delete();
+  // Also delete their progress
+  try{await db.collection("progress").doc(id).delete()}catch(e){}
+}
+// Progress: stored per userId in "progress" collection
+async function fbSaveProgress(userId,progressData){
+  if(!useFirebase||!db)return;
+  await db.collection("progress").doc(userId).set(progressData);
+}
+async function fbLoadProgress(userId){
+  if(!useFirebase||!db)return null;
+  try{
+    const doc=await db.collection("progress").doc(userId).get();
+    return doc.exists?doc.data():null;
+  }catch(e){return null}
+}
+function fbListenProgress(userId,callback){
+  if(!useFirebase||!db)return()=>{};
+  return db.collection("progress").doc(userId).onSnapshot(doc=>{
+    if(doc.exists)callback(doc.data());
+  });
+}
+async function fbResetProgress(userId){
+  if(!useFirebase||!db)return;
+  await db.collection("progress").doc(userId).set({});
+}
+async function fbLoadAllProgress(){
+  if(!useFirebase||!db)return{};
+  try{
+    const snap=await db.collection("progress").get();
+    const all={};
+    snap.docs.forEach(d=>{all[d.id]=d.data()});
+    return all;
+  }catch(e){return{}}
+}
+function fbListenAllProgress(callback){
+  if(!useFirebase||!db)return()=>{};
+  return db.collection("progress").onSnapshot(snap=>{
+    const all={};
+    snap.docs.forEach(d=>{all[d.id]=d.data()});
+    callback(all);
+  });
 }
 
 /* ══════ RICH TEXT EDITOR ══════ */
@@ -872,7 +913,7 @@ function Navbar({user,page,setPage,onLogout}){
   const links=user.role==="admin"
     ?[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"lesson-manage",label:"จัดการบทเรียน"},{id:"users",label:"จัดการผู้ใช้"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
     :user.role==="instructor"
-    ?[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"lesson-manage",label:"จัดการบทเรียน"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
+    ?[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"lesson-manage",label:"จัดการบทเรียน"},{id:"users",label:"จัดการผู้เรียน"},{id:"quiz-manage",label:"จัดการ Quiz"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}]
     :[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}];
   return(
     <nav className="nav"><div className="nav-inner">
@@ -1058,7 +1099,8 @@ function SpeedGame({onBack}){
     </div></div></div>);
 }
 
-function UserManagement({users,setUsers,addToast}){
+function UserManagement({users,setUsers,addToast,allProgress,onResetProgress,lessons,currentUserRole}){
+  const isAdmin=currentUserRole==="admin";
   const[modal,setModal]=useState(null);const[form,setForm]=useState({name:"",email:"",role:"student",password:"1234"});
   const openAdd=()=>{setForm({name:"",email:"",role:"student",password:"1234"});setModal("add")};
   const openEdit=u=>{setForm({...u});setModal("edit")};
@@ -1069,9 +1111,38 @@ function UserManagement({users,setUsers,addToast}){
       if(useFirebase){try{await fbSaveUser(form);addToast("แก้ไขสำเร็จ (Firebase) 🔥")}catch(e){addToast("บันทึกล้มเหลว","error")}}else addToast("แก้ไขสำเร็จ")}setModal(null)};
   const del=async id=>{if(!confirm("ลบผู้ใช้นี้?"))return;setUsers(p=>p.filter(u=>u.id!==id));
     if(useFirebase){try{await fbDeleteUser(id);addToast("ลบแล้ว (Firebase)","info")}catch(e){addToast("ลบล้มเหลว","error")}}else addToast("ลบแล้ว","info")};
+  const handleReset=async(u)=>{
+    if(!confirm(`รีเซ็ตความก้าวหน้าและ Quiz ของ "${u.name}" ?\n\nบทเรียนทั้งหมดจะถูกล็อกใหม่ และต้องทำ Quiz ใหม่ทั้งหมด`))return;
+    await onResetProgress(u.id);
+    addToast(`รีเซ็ตความก้าวหน้าของ ${u.name} เรียบร้อยแล้ว`,"info");
+  };
+  const getStudentProgress=(userId)=>{
+    const p=allProgress[userId]||{};
+    const completed=Object.values(p).filter(v=>v===true).length;
+    return completed;
+  };
   return(
-    <div className="container fade-in"><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:24}}><div><h1 className="page-title font-display">👥 จัดการผู้ใช้</h1></div><button className="btn btn-gold" onClick={openAdd}>+ เพิ่มผู้ใช้</button></div>
-      <div className="card" style={{overflow:"auto"}}><table className="data-table"><thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>จัดการ</th></tr></thead><tbody>{users.map(u=>(<tr key={u.id}><td style={{fontWeight:600}}>{u.name}</td><td>{u.email}</td><td><span className={`badge ${u.role==="admin"?"badge-danger":u.role==="instructor"?"badge-info":"badge-success"}`}>{u.role==="admin"?"ผู้ดูแล":u.role==="instructor"?"ผู้สอน":"ผู้เรียน"}</span></td><td style={{display:"flex",gap:6}}><button className="btn btn-sm btn-outline" onClick={()=>openEdit(u)}>✏️</button><button className="btn btn-sm btn-danger" onClick={()=>del(u.id)}>🗑️</button></td></tr>))}</tbody></table></div>
+    <div className="container fade-in"><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:24}}><div><h1 className="page-title font-display">👥 {isAdmin?"จัดการผู้ใช้":"จัดการผู้เรียน"}</h1><p className="page-sub">{isAdmin?"เพิ่ม แก้ไข ลบผู้ใช้ และรีเซ็ตความก้าวหน้า":"ดูความก้าวหน้าและรีเซ็ตผู้เรียน"}</p></div>{isAdmin&&<button className="btn btn-gold" onClick={openAdd}>+ เพิ่มผู้ใช้</button>}</div>
+      <div className="card" style={{overflow:"auto"}}><table className="data-table"><thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>ความก้าวหน้า</th><th>จัดการ</th></tr></thead><tbody>{users.map(u=>{
+        const prog=getStudentProgress(u.id);
+        const total=lessons.length;
+        return(<tr key={u.id}><td style={{fontWeight:600}}>{u.name}</td><td>{u.email}</td>
+          <td><span className={`badge ${u.role==="admin"?"badge-danger":u.role==="instructor"?"badge-info":"badge-success"}`}>{u.role==="admin"?"ผู้ดูแล":u.role==="instructor"?"ผู้สอน":"ผู้เรียน"}</span></td>
+          <td>{u.role==="student"?(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{flex:1,maxWidth:120,background:"var(--border)",borderRadius:99,height:8,overflow:"hidden"}}>
+                <div style={{width:`${total>0?(prog/total)*100:0}%`,height:"100%",background:prog===total?"var(--success)":"linear-gradient(90deg,var(--primary),var(--accent))",borderRadius:99,transition:"width .3s"}}/>
+              </div>
+              <span style={{fontSize:".8rem",fontWeight:600,color:prog===total?"var(--success)":"var(--text-light)"}}>{prog}/{total}</span>
+              {prog===total&&<span style={{fontSize:".75rem"}}>✅</span>}
+            </div>
+          ):(<span style={{fontSize:".8rem",color:"var(--text-lighter)"}}>—</span>)}</td>
+          <td><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {isAdmin&&<button className="btn btn-sm btn-outline" onClick={()=>openEdit(u)}>✏️ แก้ไข</button>}
+            {u.role==="student"&&<button className="btn btn-sm" style={{background:"linear-gradient(135deg,#F59E0B,#FBBF24)",color:"#78350F",border:"none"}} onClick={()=>handleReset(u)}>↺ รีเซ็ต</button>}
+            {isAdmin&&<button className="btn btn-sm btn-danger" onClick={()=>del(u.id)}>🗑️</button>}
+          </div></td>
+        </tr>)})}</tbody></table></div>
       {modal&&(<div className="modal-overlay" onClick={()=>setModal(null)}><div className="modal-content" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3>{modal==="add"?"เพิ่มผู้ใช้":"แก้ไขผู้ใช้"}</h3><button className="modal-close" onClick={()=>setModal(null)}>✕</button></div>
         <div className="modal-body"><div className="form-group"><label className="label">ชื่อ</label><input className="input" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div><div className="form-group"><label className="label">อีเมล</label><input className="input" type="email" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))}/></div><div className="form-group"><label className="label">รหัสผ่าน</label><input className="input" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}/></div>
           <div className="form-group"><label className="label">บทบาท</label><select className="input" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))}><option value="student">ผู้เรียน</option><option value="instructor">ผู้สอน</option><option value="admin">ผู้ดูแล</option></select></div></div>
@@ -1108,26 +1179,57 @@ function QuizManagement({lessons,setLessons,addToast}){
 /* ══════ MAIN APP ══════ */
 function App(){
   const[user,setUser]=useState(null);const[page,setPage]=useState("dashboard");const[users,setUsers]=useState(DEFAULT_USERS);
-  const[lessons,setLessons]=useState(DEFAULT_LESSONS);const[progress,setProgress]=useState({});
+  const[lessons,setLessons]=useState(DEFAULT_LESSONS);
+  const[progress,setProgress]=useState({}); // current user's progress {L1:true, L2:true...}
+  const[allProgress,setAllProgress]=useState({}); // all users' progress {userId:{L1:true,...},...}
   const[selLesson,setSelLesson]=useState(null);const[lessonIdx,setLessonIdx]=useState(0);const[viewMode,setViewMode]=useState("list");
   const{toasts,addToast}=useToast();
 
   // Firebase real-time listener
   useEffect(()=>{
     if(!useFirebase)return;
-    // Load initial data from Firestore
     fbLoadLessons().then(data=>{if(data&&data.length)setLessons(data)});
     fbLoadUsers().then(data=>{if(data&&data.length)setUsers(data)});
-    // Real-time listeners
     const unsubLessons=fbListenLessons(data=>{setLessons(data)});
     const unsubUsers=fbListenUsers(data=>{setUsers(data)});
-    return()=>{unsubLessons();unsubUsers()};
+    const unsubAllProgress=fbListenAllProgress(data=>{setAllProgress(data)});
+    return()=>{unsubLessons();unsubUsers();unsubAllProgress()};
   },[]);
 
+  // Load progress for current user when login
+  useEffect(()=>{
+    if(!user)return;
+    if(useFirebase){
+      fbLoadProgress(user.id).then(data=>{if(data)setProgress(data)});
+      const unsub=fbListenProgress(user.id,data=>{setProgress(data)});
+      return unsub;
+    } else {
+      // Offline: load from allProgress
+      setProgress(allProgress[user.id]||{});
+    }
+  },[user]);
+
   const handleLogin=u=>{setUser(u);setPage("dashboard");addToast(`ยินดีต้อนรับ ${u.name}`)};
-  const handleLogout=()=>{setUser(null);setPage("dashboard");setViewMode("list");setSelLesson(null)};
+  const handleLogout=()=>{setUser(null);setPage("dashboard");setViewMode("list");setSelLesson(null);setProgress({})};
   const handleSelectLesson=(l,i)=>{setSelLesson(l);setLessonIdx(i);setViewMode("content");setPage("lessons")};
-  const handlePassQuiz=id=>{setProgress(p=>({...p,[id]:true}));setViewMode("list")};
+  const handlePassQuiz=id=>{
+    const newProgress={...progress,[id]:true};
+    setProgress(newProgress);
+    // Save to Firebase
+    if(useFirebase&&user) fbSaveProgress(user.id,newProgress);
+    // Save to allProgress (offline mode)
+    setAllProgress(p=>({...p,[user.id]:newProgress}));
+    setViewMode("list");
+  };
+  const handleResetProgress=async(userId)=>{
+    // Reset progress for a specific user
+    if(useFirebase){
+      await fbResetProgress(userId);
+    }
+    setAllProgress(p=>({...p,[userId]:{}}));
+    // If resetting current user
+    if(user&&user.id===userId) setProgress({});
+  };
 
   if(!user)return<><LoginPage onLogin={handleLogin} users={users}/><Toast toasts={toasts}/></>;
 
@@ -1144,7 +1246,7 @@ function App(){
   else if(page==="lesson-manage")content=<LessonManagement lessons={lessons} setLessons={setLessons} addToast={addToast} user={user}/>;
   else if(page==="calculator")content=<Calculator/>;
   else if(page==="game")content=<GamePage/>;
-  else if(page==="users"&&user.role==="admin")content=<UserManagement users={users} setUsers={setUsers} addToast={addToast}/>;
+  else if(page==="users"&&(user.role==="admin"||user.role==="instructor"))content=<UserManagement users={users} setUsers={setUsers} addToast={addToast} allProgress={allProgress} onResetProgress={handleResetProgress} lessons={lessons} currentUserRole={user.role}/>;
   else if(page==="quiz-manage"&&(user.role==="admin"||user.role==="instructor"))content=<QuizManagement lessons={lessons} setLessons={setLessons} addToast={addToast}/>;
   else content=<Dashboard user={user} lessons={lessons} progress={progress} users={users}/>;
 
