@@ -317,7 +317,7 @@ const DEFAULT_USERS=[
 ];
 
 const DEFAULT_LESSONS=[
-  {id:"L1",title:"ชนิดของผ้าม่าน",icon:"🪟",color:LESSON_COLORS[0],description:"ทำความรู้จักผ้าม่านประเภทต่างๆ ตั้งแต่ม่านตาไก่ ม่านจีบ ไปจนถึงม่านพับ",
+  {id:"L1",title:"ชนิดของผ้าม่าน",icon:"🏠",color:LESSON_COLORS[0],description:"ทำความรู้จักผ้าม่านประเภทต่างๆ ตั้งแต่ม่านตาไก่ ม่านจีบ ไปจนถึงม่านพับ",
     content:`<h2>บทที่ 1: ความรู้พื้นฐานเกี่ยวกับชนิดของผ้าม่าน</h2><p>ผ้าม่านเป็นองค์ประกอบสำคัญของการตกแต่งภายใน ไม่เพียงแต่ช่วยกรองแสง แต่ยังช่วยเสริมความสวยงามให้กับห้อง</p><h3>1. ม่านตาไก่ (Eyelet/Grommet Curtains)</h3><p>ม่านตาไก่เป็นม่านที่มีรูกลมเจาะที่ส่วนบนของผ้า สอดรางม่านผ่านรูเหล่านี้โดยตรง ให้ลุคที่ทันสมัยและสะอาดตา</p><blockquote>💡 <strong>จุดเด่น:</strong> ติดตั้งง่าย เลื่อนเปิด-ปิดสะดวก จีบสม่ำเสมอ</blockquote><h3>2. ม่านจีบ (Pleated Curtains)</h3><p>ม่านจีบเป็นสไตล์คลาสสิก มีหลายแบบ: จีบ 2 นิ้ว จีบ 3 นิ้ว และจีบดินสอ</p><ul><li><strong>จีบ 2 นิ้ว (Pinch Pleat):</strong> ให้ลุคหรูหรา</li><li><strong>จีบ 3 นิ้ว (Triple Pleat):</strong> จีบละเอียด ดูเป็นทางการ</li><li><strong>จีบดินสอ (Pencil Pleat):</strong> จีบเล็กๆ ใช้ได้ทุกสไตล์</li></ul><h3>3. ม่านพับ (Roman Blinds)</h3><p>ม่านพับจะพับเก็บเป็นชั้นๆ เมื่อดึงขึ้น ให้ดูเรียบหรูและประหยัดพื้นที่</p><h3>4. ม่านม้วน (Roller Blinds)</h3><p>ม่านม้วนเป็นม่านที่ม้วนเก็บบนแกนกลม ใช้งานง่าย เหมาะกับออฟฟิศ</p><h3>5. ม่านมู่ลี่ (Venetian Blinds)</h3><p>ประกอบด้วยแผ่นบาง (Slat) เรียงซ้อนกัน ปรับมุมเพื่อควบคุมแสงได้</p>`,downloadUrl:"#",
     quizPool:[
       {q:"ม่านตาไก่มีลักษณะเด่นอย่างไร?",opts:["มีรูกลมเจาะที่ส่วนบน","พับเก็บเป็นชั้นๆ","ม้วนเก็บบนแกนกลม","มีแผ่นบางเรียงซ้อน"],ans:0},
@@ -850,7 +850,7 @@ function LoginPage({onLogin,users}){
   const handleLogin=e=>{e.preventDefault();const u=users.find(u=>u.email===email&&u.password===pass);if(u)onLogin(u);else setErr("อีเมลหรือรหัสผ่านไม่ถูกต้อง")};
   return(
     <div className="login-wrap"><div className="login-bg"/><div className="login-curtain"/>
-      <div className="login-card"><div className="login-logo"><div style={{fontSize:"3rem",marginBottom:12}}>🪟</div><h1 className="font-display">Curtain Academy</h1><p>ระบบเรียนรู้ผ้าม่านออนไลน์</p></div>
+      <div className="login-card"><div className="login-logo"><div style={{marginBottom:12}}><svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="6" width="40" height="4" rx="2" fill="#22D3EE"/><rect x="10" y="10" width="8" height="32" rx="2" fill="#6366F1" opacity=".8"/><rect x="20" y="10" width="8" height="28" rx="2" fill="#8B5CF6" opacity=".7"/><rect x="30" y="10" width="8" height="32" rx="2" fill="#6366F1" opacity=".8"/><rect x="40" y="10" width="8" height="28" rx="2" fill="#8B5CF6" opacity=".7"/><rect x="6" y="44" width="44" height="4" rx="2" fill="#22D3EE" opacity=".5"/></svg></div><h1 className="font-display">Curtain Academy</h1><p>ระบบเรียนรู้ผ้าม่านออนไลน์</p></div>
         <form onSubmit={handleLogin}><div className="form-group"><label className="label">อีเมล</label><input className="input" type="email" placeholder="your@email.com" value={email} onChange={e=>{setEmail(e.target.value);setErr("")}}/></div>
           <div className="form-group"><label className="label">รหัสผ่าน</label><input className="input" type="password" placeholder="••••••" value={pass} onChange={e=>{setPass(e.target.value);setErr("")}}/></div>
           {err&&<p style={{color:"#e74c3c",fontSize:".85rem",marginBottom:12}}>{err}</p>}
@@ -876,7 +876,7 @@ function Navbar({user,page,setPage,onLogout}){
     :[{id:"dashboard",label:"แดชบอร์ด"},{id:"lessons",label:"บทเรียน"},{id:"calculator",label:"เครื่องคำนวณ"},{id:"game",label:"เกม"}];
   return(
     <nav className="nav"><div className="nav-inner">
-      <div className="nav-brand" onClick={()=>setPage("dashboard")}><span>🪟</span><span>Curtain Academy</span></div>
+      <div className="nav-brand" onClick={()=>setPage("dashboard")}><svg width="26" height="26" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="6" width="40" height="4" rx="2" fill="#22D3EE"/><rect x="10" y="10" width="8" height="32" rx="2" fill="#6366F1" opacity=".8"/><rect x="20" y="10" width="8" height="28" rx="2" fill="#8B5CF6" opacity=".7"/><rect x="30" y="10" width="8" height="32" rx="2" fill="#6366F1" opacity=".8"/><rect x="40" y="10" width="8" height="28" rx="2" fill="#8B5CF6" opacity=".7"/><rect x="6" y="44" width="44" height="4" rx="2" fill="#22D3EE" opacity=".5"/></svg><span>Curtain Academy</span></div>
       <button className="nav-mobile-toggle" onClick={()=>setMobileOpen(!mobileOpen)}>☰</button>
       <div className={`nav-links ${mobileOpen?"open":""}`}>{links.map(l=>(
         <button key={l.id} className={`nav-link ${page===l.id?"active":""}`} onClick={()=>{setPage(l.id);setMobileOpen(false)}}>{l.label}</button>
@@ -1035,7 +1035,7 @@ function MatchGame({onBack}){
         {won&&<Confetti/>}
         {won?(<div style={{textAlign:"center",padding:40}}><div style={{fontSize:"4rem",marginBottom:16}}>🎉</div><h3 style={{color:"var(--primary)",fontSize:"1.6rem"}}>ยินดีด้วย!</h3><p style={{color:"var(--text-light)",margin:"12px 0"}}>{moves} ครั้ง</p><button className="btn btn-gold" onClick={init}>เล่นอีกครั้ง</button></div>
         ):(<div className="game-board" style={{gridTemplateColumns:"repeat(4,1fr)"}}>{cards.map((c,i)=>{const f=flipped.includes(i);const m=matched.includes(c.pairId);
-          return(<div key={c.uid} className={`game-card-cell ${f?"flipped":""} ${m?"matched":""}`} onClick={()=>flip(i)}><div className="game-card-inner"><div className="game-card-front">🪟</div><div className="game-card-back"><span style={{fontSize:c.type==="th"?".85rem":".75rem"}}>{c.text}</span><span style={{fontSize:".6rem",color:"var(--text-light)"}}>{c.type==="th"?"🇹🇭":"🇬🇧"}</span></div></div></div>)
+          return(<div key={c.uid} className={`game-card-cell ${f?"flipped":""} ${m?"matched":""}`} onClick={()=>flip(i)}><div className="game-card-inner"><div className="game-card-front">🎴</div><div className="game-card-back"><span style={{fontSize:c.type==="th"?".85rem":".75rem"}}>{c.text}</span><span style={{fontSize:".6rem",color:"var(--text-light)"}}>{c.type==="th"?"TH":"EN"}</span></div></div></div>)
         })}</div>)}
       </div>
     </div>
